@@ -110,7 +110,7 @@ or not at any particular time.
 
 ## Usage Overview
 
-[Pre-weakref](pre-structure.svg]) The first diagram shows the objects
+[Pre-weakref](pre-structure.svg) The first diagram shows the objects
 in an example scenario before weak references are used.
 
   * A client gets the target (e.g., a file) from the service object
@@ -141,7 +141,7 @@ The below example shows some characteristics of basic usage
 // target becomes unreachable.
 // The holdings is an optional argument that will be provided to the
 // executor when it is invoked for target.
-makeWeakRef(target, executor, holdings)
+makeWeakRef(target, executor, holdings);
 
 let buf = pool.getBuf();
 let original = someObject(buf);
@@ -188,7 +188,7 @@ can address this ideally by running executors only between turns;
 i.e., when the application stack is empty.
 
 Because there may be a large number of finalizers and they are user
-code that could for unbounded periods, it crucial for system
+code that could run for unbounded periods, it crucial for system
 responsiveness that the finalizers can run interleaved with multiple
 program jobs. Therefore the proposal specifies that finalizers are
 scheduled conceptually on a separate job queue (or queues) for
@@ -225,7 +225,7 @@ finalization code.
 Revealing the non-deterministic behavior of the garbage collector
 creates a potential for portability bugs. Different host environments
 may collect a weakly-held object at different times, which a
-```WeakRef``` exposes to the program. More generally, The
+```WeakRef``` exposes to the program. More generally, the
 ```makeWeakRef``` function is not safe for general access since it
 grants access to the non-determinism inherent in observing garbage
 collection. The resulting side channel reveals information that may
@@ -260,7 +260,7 @@ unreachable during a turn, and replaced with a new tree (e.g., virtual
 DOM creation in React), this strategy would prevent the original,
 now-unreachable tree from being collected until the next GC between
 turns. Such a restriction would lead to unexpected OOM for otherwise
-correct, non-leaking programs. therefore this approach is not
+correct, non-leaking programs. Therefore this approach is not
 sufficient or acceptable.
 
 The example pseudocode below illustrates a simple approach that
@@ -330,7 +330,7 @@ finalization code is allowed to allocate normally.
 
 ## Exceptions during Finalization
 
-Finalization occurs in it's own turn. Therefore exceptions thrown at
+Finalization occurs in its own turn. Therefore exceptions thrown at
 the top level of finalization can use normal exception handling
 behavior.
 
@@ -547,8 +547,8 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
 # Open questions
 
    * should get() on a collected weak ref return null or undefined?
-   * should a the holdings default to null or undefined? should the
-   * weak ref be obligated to preserve the holdings or executor
+   * should the holdings default to null or undefined?
+   * should a weak ref be obligated to preserve the holdings or executor
      until the target is collected? It will certainly drop them after
      finalization, so it doesn't have a long-term obligation.
 
