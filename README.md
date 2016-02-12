@@ -4,7 +4,8 @@
 
 * WeakReferences are now Stage 0
 * Dean Tribble is champion. Mark Miller
+* Initial stage 1 proposal is ready for feedback
 
 ## Todo
 
-* Capture current requirements and design in Stage 1 document
+* Finish stage 1 proposal for presentation in March
