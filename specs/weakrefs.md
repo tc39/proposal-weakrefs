@@ -28,14 +28,14 @@ that object from being garbage collected. *Finalization* is the
 execution of code to clean up after an object that has become
 unreachable to program execution.
 
-For example, MVC frameworks often use an observer pattern: the
-view points at the model, and also registers as an observer of the
-model. If the view is no longer referenced from the view hierarchy, it
-should be reclaimable. However in the observer pattern, the model
-points at its observers, so the model retains the view (even though
-the view is no longer displayed). By having the view point at its
-observers using a weak reference, the view can just garbage collect
-normally with no complicated reference management code.
+For example, MVC frameworks often use an observer pattern: the view
+points at the model, and also registers as an observer of the model.
+If the view is no longer referenced from the view hierarchy, it should
+be reclaimable. However in the observer pattern, the model points at
+its observers, so the model retains the view (even though the view is
+no longer displayed). By having the model point at its observers using
+a weak reference, the view can just be garbage collected normally with
+no complicated reference management code.
 
 Similarly, a graphics widget might have a reference to a primitive
 external bitmap resource that requires manual cleanup (e.g., it must
@@ -547,10 +547,13 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
 # Open questions
 
    * should get() on a collected weak ref return null or undefined?
+
    * should the holdings default to null or undefined?
-   * should a weak ref be obligated to preserve the holdings or executor
-     until the target is collected? It will certainly drop them after
-     finalization, so it doesn't have a long-term obligation.
+
+   * should a weak ref be obligated to preserve the holdings or
+     executor until the target is collected? It will certainly drop
+     them after finalization, so it doesn't have a long-term
+     obligation.
 
 # References
 
