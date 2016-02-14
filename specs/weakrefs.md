@@ -272,9 +272,7 @@ assume the following code blocks are atomic wrt gc.
 
 The MARK method explains how the normal mark phase of gc marks through
 a weak reference. It treats the `target` pointer as strong *unless* it
-has not been observed in the current turn. A more complete version of
-this code is at the end of the document, and covers more cases and
-subtleties.
+has not been observed in the current turn.
 
 ```js
 function makeWeakRef(target, executor = void 0, holdings = void 0) {
@@ -317,6 +315,9 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
   return weakReference;
 }
 ```
+NOTE A more complete version of this code is at the end of the
+document, which avoids allocations and and covers more cases and
+subtleties.
 
 ## Allocation During GC and Finalization
 
@@ -468,79 +469,82 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
   if (target !== Object(target)) {
     throw new TypeError('Object expected');
   }
-  if (REALM_OF(target) !== REALM_OF(makeWeakRef)) {
-    // Just return a simple implementation with a strong pointer
-    // for cross-realm references.
+  if (REALM_OF(target) === REALM_OF(makeWeakRef)) {
     return {
-      get() {
-        return target;
-      }
-      clear() {
-        // Undefined is used to indicate the collected or cleared
-        // state so that it's analogous to being now uninitialized.
-        target = void 0;
-        executor = null;
-        holdings = null;
-      }
-    }
+      __proto__: %WeakRefPrototype%,
+      WEAK [[Target]]: target,  
+      [[ObservedTurn]]: [[CURRENT_TURN]],
+      [[Executor]]: executor,
+      [[Holdings]]: holdings,
+    };
+  } else {
+    // For cross-realm targets, the [[Target]] slot is not weak.
+    return {
+      __proto__: %WeakRefPrototype%,
+      [[Target]]: target,
+      [[ObservedTurn]]: [[CURRENT_TURN]],
+      [[Executor]]: executor,
+      [[Holdings]]: holdings,
+    };    
   }
-
-  let observedTurn = CURRENT_TURN;
-  WEAK_LET weakPtr = target;
-
-  const weakReference = {
-    get() {
-      observedTurn = CURRENT_TURN;
-      return weakPtr;
-    }
-    clear() {
-      weakPtr = void 0;
-      executor = null;
-      holdings = null;
-    }
-    // MARK is only called by gc, as part of its normal mark phase.
-    // Obviously, not visible to JS code.
-    MARK() {
-      MARK(executor);
-      MARK(holdings);
-      if (observedTurn === CURRENT_TURN) {
-        MARK(weakPtr);
-        return;
-      }
-      if (! IS_MARKED(target) && typeof executor === 'function') {
-        // this will only potentially need finalization if it has a
-        // an executor.
-        ENCOUNTER(weakReference);
-      }
-    }
-    // Called after all marking on all weak refs encountered.
-    SCHEDULE_FINALIZATION() {
-      // This step is only run if there was an executor, so this weak
-      // ref needs to be finalized if the target is not strongly
-      // reachable. The target will be undefined if the target became
-      // unreachable during a previous collection and we are
-      // rebuilding the finalization queue.
-      // Note that this step is atomic
-      if (! IS_MARKED(target) || target === void 0) {
-        weakPtr = void 0;
-        QUEUE_FINALIZATION(weakReference);
-      }
-    }
-    // FINALIZE is only called by gc, and only if this weak reference
-    // is not already finalized. It tests that there is *still* and
-    // executor to coordinate with user code that clears the weak ref.
-    // Obviously, not visible to JS code.
-    FINALIZE() {
-      if (typeof executor === 'function') {
-        let exec = executor;
-        let hold = holdings;
-        weakReference.clear();
-        exec(hold);
-      }
-    }
-  };
-  return weakReference;
 }
+
+%WeakRefPrototype% = {
+  get() {
+    this.[[ObservedTurn]] = [[CURRENT_TURN]];
+    return this.[[Target]];
+  },
+  clear() {
+    // Undefined is used to indicate the collected or cleared
+    // state so that it's analogous to being now uninitialized.
+    this.[[Target]] = void 0;
+    this.[[Executor]] = null;
+    this.[[Holdings]] = null;
+  }
+};
+
+// Called by gc as part of its normal mark phase.
+function [[WeakRefMark]](weakref) {
+  MARK(weakref.[[Executor]]);
+  MARK(weakref.[[Holdings]]);
+  if (weakref.[[ObservedTurn]] === [[CURRENT_TURN]]) {
+    MARK(weakref.[[Target]]);
+    return;
+  }
+  if (typeof weakref.[[Executor]] === 'function'
+        && ![[IS_MARKED]](weakref.[[Target]])) {
+    // weakref will only potentially need finalization if it has
+    // an executor.
+    [[ENCOUNTER]](weakref);
+  }
+};
+
+// Called for each weak ref after all marking on all weak refs
+// encountered. Checks whether the WeakRef needs finalization.
+function [[WeakRefCheckFinalization]](weakref){
+  // This step is only run if there was an executor, so this weak
+  // ref needs to be finalized if the target is not strongly
+  // reachable. The target will be undefined if the target became
+  // unreachable during a previous collection and we are
+  // rebuilding the finalization queue.
+  let target = weakref.[[Target]]);
+  if (! [[IS_MARKED]](target) || target === void 0) {
+    weakref.[[Target]] = void 0;
+    [[QUEUE_FINALIZATION]](weakref);
+  }
+};
+
+// Called by gc in its own turn, if and only if this weak reference is
+// not already finalized. It is a no-op if the executor is null in
+// order to coordinate with user code that clears the weak ref.
+function [[WeakRefFinalize]](weakref){
+  let exec = weakref.[[Executor]];
+  if (typeof exec === 'function') {
+    let hold = weakref.[[Holdings]];
+    weakref.clear();
+    exec(hold);
+  }
+};
 
 ```
 
