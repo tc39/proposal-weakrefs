@@ -44,6 +44,15 @@ cleanup the bitmap resource when the graphics widget is reclaimed,
 avoiding the need for pervasive manual disposal discipline across the
 widget library.
 
+# Intended Audience
+
+The garbage collection challenges addressed here largely arise in the
+implementation of libraries and frameworks. The features proposed here
+are advanced features (e.g., like proxies) that are primarily intended
+for use by library and framework creators, not their clients. Thus,
+the priority is enabling library implementors to correctly,
+efficiently, and securely manage object lifetimes and finalization.
+
 # Solution Approach
 
 This proposal is based on Jackson et.al.'s **Weak References and
