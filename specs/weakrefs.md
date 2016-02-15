@@ -70,13 +70,15 @@ finalization never touches the condemned object. Once an object is
 condemned, it stays condemned (the transition is monotonic).
 
 To support finalization, an object called an *executor* can be
-associated with any object. The executor will be notified when the
-target object is condemned. The executor will eventually be invoked,
-not with the original object, but with the *holdings* of that object,
-the other objects needed to clean up after the reclaimed object. For
-example, the executor for canvas objects might get invoked with the
-bitmap that the canvas was drawing into, and it would return that
-bitmap back to a pool.
+associated with any target object. When the target object is
+condemned, the executor will execute to clean up after the target. The
+executor needs to use some state to clean up after target; the
+condemned target is no longer available. That state importantly might
+*not* be state previously"owned" by the target. For example, cached
+XML nodes for an XML parser would not have been owned by the file they
+are parsed from. Therefore the proposal uses the general terms
+*holdings* for this state (rather than the attractive but misleading
+term "estate").
 
 By never allowing a reference to the condemned object, resurrection is
 simply precluded. For a layered data structure, the entire data
@@ -234,6 +236,10 @@ of other programs. Therefore we add `makeWeakRef` to the `System`
 object, just like other authority-bearing objects, e.g.,
 [the default loader](https://github.com/whatwg/loader/issues/34).
 
+WeakRef instances may often be referenced by code that should not have
+the same authority. Therefore the constructor for WeakRefs must not be
+available via WeakRef instances.
+
 ## Reference stability during turns
 
 To further eliminate unnecessary non-determinism, we tie the
@@ -331,9 +337,81 @@ finalization code is allowed to allocate normally.
 
 ## Exceptions during Finalization
 
-Finalization occurs in its own turn. Therefore exceptions thrown at
-the top level of finalization can use normal exception handling
-behavior.
+Each finalization action occurs in its own turn. Therefore exceptions
+thrown at the top level of finalization can use normal exception
+handling behavior.
+
+## Unintended Retention
+
+Post-mortem finalization prevents resurrection bugs. However, some
+patterns of code using finalization may inadvertently retain objects
+that would otherwise have been garbage. This proposal is designed to
+minimize these leaks, because bugs of this nature tend to only
+manifest when there's enough load that a small leak matters. The most
+basic cause is if the executor is setup to use the target itself to
+clean up after itself (i.e., someone tries to emulate destructors).
+Providing the target itself as the executor or holdings prevents the
+entire purpose of WeakRefs because the WeakRef points strongly at
+those. In practice this is almost always an error and so should be
+detected and signaled at WeakRef creation time.
+
+Another cause of unexpected retention is functions whose stored
+context includes the target (this may be because the functions
+mentions the target explicitly, or because the runtime used a shared
+context for multiple functions). A pattern of allocating new executor
+functions for each new weak reference is more susceptible to this
+issue.
+
+An example with file stream construction that arranges the underlying
+file to be closed. The last line of the constructor is deliberately
+unrelated code that uses a function.
+```js
+const openfiles = new Map();
+
+// closeFile is the shared executor for all files.
+const closeFile(file) {
+  file.close();
+  openFiles.delete(file);
+}
+
+class FileStream {
+  constructor(filename) {
+    this.file = new File(filename, "r");
+    openFiles.set(file, makeWeakRef(this, () => closeFile(this.file)));
+    // now eagerly load the contents
+    this.loading = file.readAsync.then(data => this.setData(data));    
+  }, ...
+}
+```
+The constructor code straightforward, but unfortunately closes over
+the file stream target, and therefore prevents garbage collection
+of it. A more careful variant is:
+```js
+class FileStream {
+  constructor(filename) {
+    let file = new File(filename, "r");
+    this.file = file;
+    openFiles.set(file, makeWeakRef(this, () => closeFile(file))));
+    // now eagerly load the contents
+    this.loading = file.readAsync.then(data => this.setData(data));    
+  }, ...
+```
+With sufficient care, the finalization avoids retaining `this`.
+However, as mentioned above, a wide variety of function implementation
+approaches use shared records for multiple functions in the same
+scope. The mere existence of the `data => this.setData(data)` function
+in the same scope could cause the executor function
+`() => closeFile(file)` to additionally point at `this`. The pattern
+using `holdings` avoids this:
+```js
+class FileStream {
+  constructor(filename) {
+    this.file = new File(filename, "r");
+    openFiles.set(file, makeWeakRef(this, closefile, this.file)));
+    // now eagerly load the contents
+    this.loading = file.readAsync.then(data => this.setData(data));    
+  }, ...
+```
 
 ## WeakRef collection
 
@@ -469,6 +547,12 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
   if (target !== Object(target)) {
     throw new TypeError('Object expected');
   }
+  if (target === holdings) {
+    throw new TypeError('Target cannot be used to clean up itself');
+  }
+  if (target === executor) {
+    throw new TypeError('Target cannot be used to clean up itself');
+  }
   if (REALM_OF(target) === REALM_OF(makeWeakRef)) {
     return {
       __proto__: %WeakRefPrototype%,
@@ -483,8 +567,10 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
       __proto__: %WeakRefPrototype%,
       [[Target]]: target,
       [[ObservedTurn]]: [[CURRENT_TURN]],
-      [[Executor]]: executor,
-      [[Holdings]]: holdings,
+      // the Target is strongly held by the WeakRef so finalization
+      // for Target will never happen. Therefore we don't need these
+      [[Executor]]: void 0,
+      [[Holdings]]: void 0,
     };    
   }
 }
@@ -550,14 +636,32 @@ function [[WeakRefFinalize]](weakref){
 
 # Open questions
 
-   * should get() on a collected weak ref return null or undefined?
+* Should get() on a weak ref whose target is collected return null or
+  undefined?
 
-   * should the holdings default to null or undefined?
+The proposal is that it returns undefined. Collection effectively
+returns a reference to the uninitialized state.
 
-   * should a weak ref be obligated to preserve the holdings or
-     executor until the target is collected? It will certainly drop
-     them after finalization, so it doesn't have a long-term
-     obligation.
+* Should the holdings default to null or undefined?
+
+This answer is user-visible to the invocation of the executor
+function. The proposed code currently defaults holdings to undefined.
+
+* Should a weak ref be obligated to preserve the holdings or
+  executor until the target is collected?
+
+The proposal is that it is not required to retain any state it no
+longer needs. It will certainly drop them after finalization, so it
+doesn't have a long-term obligation. Following the design principle of
+"allow implementations to collect as much as possible", the
+implementation not be obligated to retain them. The implementation of
+cross-realm references was modified to reflect this.
+
+* Should weakRefs follow the class pattern?
+
+Yes, except that it must preserve the security property that
+construction of WeakRefs is restricted; the power to make a new weak
+ref must not be available from instances.
 
 # References
 
