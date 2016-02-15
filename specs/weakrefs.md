@@ -74,7 +74,7 @@ associated with any target object. When the target object is
 condemned, the executor will execute to clean up after the target. The
 executor needs to use some state to clean up after target; the
 condemned target is no longer available. That state importantly might
-*not* be state previously"owned" by the target. For example, cached
+*not* be state previously "owned" by the target. For example, cached
 XML nodes for an XML parser would not have been owned by the file they
 are parsed from. Therefore the proposal uses the general terms
 *holdings* for this state (rather than the attractive but misleading
