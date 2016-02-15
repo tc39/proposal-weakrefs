@@ -172,17 +172,17 @@ This shows pseudo typing for the proposed weak references API.
 ```js
 makeWeakRef : function(
                 target   : object,
-                executor : function(holdings : any) -> undefined,
-                holdings : any) -> WeakRef
+                executor = void 0 : function(holdings : any) -> undefined,
+                holdings = void 0 : any) -> WeakRef
 WeakRef     : object {
                 get   : function() -> object | null
                 clear : function() -> undefined
               }
 ```
 
-  * ```makeWeakRef(target, executor, holdings)``` -- returns a new
-    weak reference to ```target```. Throws if `target` is not an
-    object.
+  * ```makeWeakRef(target, executor = void 0, holdings = void 0)```
+    -- returns a new weak reference to ```target```. Throws if
+    `target` is not an object.
   * ```get``` -- returns the weakly held target object,
     or ```null``` if the object has been collected.
   * ```clear``` -- ```null```s out the internal weak reference and
