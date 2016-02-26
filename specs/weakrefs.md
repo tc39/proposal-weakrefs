@@ -102,7 +102,7 @@ C#'s [pre-mortem finalization challenges](http://blogs.msdn.com/b/cbrumme/archiv
 # Proposed Solution
 
 We specify the proposed API in terms of a new function:
-```makeWeakRef```. It takes a `target` object, an optional `executor`,
+`makeWeakRef`. It takes a `target` object, an optional `executor`,
 and an optional `holdings` object, and returns a fresh weak reference
 that internally has a weak pointer to the target. The target can be
 retrieved from the resulting weak reference unless the target has been
@@ -165,29 +165,6 @@ assert(wr.get() === null);
 assert(buff.isReleased);
 ```
 
-## The API
-
-This shows pseudo typing for the proposed weak references API.
-
-```js
-makeWeakRef : function(
-                target   : object,
-                executor = void 0 : function(holdings : any) -> undefined,
-                holdings = void 0 : any) -> WeakRef
-WeakRef     : object {
-                get   : function() -> object | null
-                clear : function() -> undefined
-              }
-```
-
-  * ```makeWeakRef(target, executor = void 0, holdings = void 0)```
-    -- returns a new weak reference to ```target```. Throws if
-    `target` is not an object.
-  * ```get``` -- returns the weakly held target object,
-    or ```null``` if the object has been collected.
-  * ```clear``` -- ```null```s out the internal weak reference and
-    prevents the executor from getting invoked.
-
 # Additional Requirements and Discussion
 
 ## Finalization between turns
@@ -236,8 +213,8 @@ finalization code.
 Revealing the non-deterministic behavior of the garbage collector
 creates a potential for portability bugs. Different host environments
 may collect a weakly-held object at different times, which a
-```WeakRef``` exposes to the program. More generally, the
-```makeWeakRef``` function is not safe for general access since it
+`WeakRef` exposes to the program. More generally, the
+`makeWeakRef` function is not safe for general access since it
 grants access to the non-determinism inherent in observing garbage
 collection. The resulting side channel reveals information that may
 violate the [confidentiality assumptions](http://wiki.ecmascript.org/doku.php?id=strawman:gc_semantics)
@@ -259,13 +236,13 @@ The informal invariant is:
 within a turn of the event loop.*
 
 Specifically, this means that, unless the weak reference is explicitly
-modified during the turn (e.g., via ```clear```):
+modified during the turn (e.g., via `clear`):
 
   * When a weak reference is created, subsequent calls to its
-    ```get``` method within the same turn must return the object with
+    `get` method within the same turn must return the object with
     which it was created.
-  * If a weak reference's ```get``` method is called and produces an
-    object, subsequent calls to its ```get``` method within the same
+  * If a weak reference's `get` method is called and produces an
+    object, subsequent calls to its `get` method within the same
     turn must return the same object.
 
 A naive approach to this is to simply restrict garbage collection to
@@ -439,7 +416,7 @@ collector, which can provide a channel of communication between
 isolated subgraphs that share only transitively immutable objects, and
 therefore should not be able to communicate. Security-sensitive code
 would most likely need to virtualize or censor access to the
-```makeWeakRef```  function from untrusted code. However, such
+`makeWeakRef`  function from untrusted code. However, such
 restrictions do not enable one realm to police other realms. To plug
 this leak, a weak reference created within realm A should only point
 weakly within realm A. When set to point at an object from another
@@ -487,6 +464,47 @@ and ends up pointing at objects in newer generations. The resulting
 "remember set" overhead and impact on GC outweighs that potential
 advantage. Therefore this proposal specifies the simpler WeakRef
 approach here.
+
+## The API
+
+This shows pseudo typing and behavioral description for the proposed
+weak references API.
+
+```js
+makeWeakRef : function(
+                target   : object,
+                executor = void 0 : function(holdings : any) -> undefined,
+                holdings = void 0 : any) -> WeakRef
+WeakRef     : object {
+                get   : function() -> object | void 0
+                clear : function() -> void 0
+              }
+```
+
+  * `makeWeakRef(target, executor = void 0, holdings = void 0)` -
+  returns a new weak reference to `target`. Throws `TypeError` if
+  `target` is not an object or if it is the same as `holdings` or
+  `executor`.
+
+  * `get` - returns the weakly held target object, or `undefined`
+   if the object has been collected.
+
+  * `clear` - sets the internal weak reference to `undefined` and
+    prevents the executor from getting invoked.
+
+If an executor is provided, then it may be invoked on the holdings in
+it's own turn if:
+
+* the `target` is condemned
+* the `WeakRef` is not condemned
+* the `WeakRef` has not been `clear()`ed.
+
+Constructing a new `WeakRef` or retrieving the `target` from an
+existing `WeakRef` (using `get()`) causes the `WeakRef` to act as a
+normal (strong) reference to the target for the remainder of the
+current turn. Thus for example, if a GC is performed during that turn
+but after such a `get()` call the `WeakRef` is processed as a normal
+object.
 
 # GC Implementation Approach
 
