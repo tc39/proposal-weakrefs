@@ -362,8 +362,9 @@ const closeFile(file) {
 
 class FileStream {
   constructor(filename) {
-    this.file = new File(filename, "r");
-    openFiles.set(file, makeWeakRef(this, () => closeFile(this.file)));
+    let file = new File(filename, "r");
+    this.file = file;
+    openFiles.set(file, makeWeakRef(this, () => closeFile(file)));
     // now eagerly load the contents
     this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
@@ -392,8 +393,9 @@ using `holdings` avoids this:
 ```js
 class FileStream {
   constructor(filename) {
-    this.file = new File(filename, "r");
-    openFiles.set(file, makeWeakRef(this, closefile, this.file)));
+    let file = new File(filename, "r");
+    this.file = file;
+    openFiles.set(file, makeWeakRef(this, closefile, file)));
     // now eagerly load the contents
     this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
@@ -492,8 +494,8 @@ WeakRef     : object {
   * `clear` - sets the internal weak reference to `undefined` and
     prevents the executor from getting invoked.
 
-If an executor is provided, then it may be invoked on the holdings in
-it's own turn if:
+If an executor is provided, then it may be invoked on the holdings
+(with **this** bound to **undefined**) in it's own turn if:
 
 * the `target` is condemned
 * the `WeakRef` is not condemned
@@ -527,8 +529,9 @@ The abstract operation `makeWeakRef` with arguments `target`,
 It performs the following steps:
 
 1. If Type(target) is not Object, throw a TypeError exception
+1. If Type(executor) is not Undefined or Type(executor) is not Function, throw a TypeError exception
 2. If SameValue(target, holdings), throw a TypeError exception
-3. If !SameValue(target, executor), throw a TypeError exception
+3. If SameValue(target, executor), throw a TypeError exception
 4. Let _currentTurn_ be GetCurrentJobReference().
 5. Let _targetRealm_ be ? GetFunctionRealm(target).
 6. Let _thisRealm_ be ? GetFunctionRealm(**this**).
@@ -793,6 +796,18 @@ cross-realm references was modified to reflect this.
 Yes, except that it must preserve the security property that
 construction of WeakRefs is restricted; the power to make a new weak
 ref must not be available from instances.
+
+* Should the weakRef be provided as an additional argument to the executor?
+
+NOTE: The current proposal provides only the holdings to the executor
+invocation. Adding the argument is upwards compatible, so this does
+not need to be resolved immediately.
+
+Additional usage examples are needed to determine the best pattern
+here. In examples so far, there is already a mapping from holdings to
+weakRef, so there's no need for the additional argument, but the
+presence of the weakRef may simplify some other usage patterns, and
+it's trivially available to provide.
 
 # References
 
