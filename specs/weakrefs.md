@@ -365,7 +365,7 @@ class FileStream {
     this.file = new File(filename, "r");
     openFiles.set(file, makeWeakRef(this, () => closeFile(this.file)));
     // now eagerly load the contents
-    this.loading = file.readAsync.then(data => this.setData(data));    
+    this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
 }
 ```
@@ -379,7 +379,7 @@ class FileStream {
     this.file = file;
     openFiles.set(file, makeWeakRef(this, () => closeFile(file))));
     // now eagerly load the contents
-    this.loading = file.readAsync.then(data => this.setData(data));    
+    this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
 ```
 With sufficient care, the finalization avoids retaining `this`.
@@ -395,7 +395,7 @@ class FileStream {
     this.file = new File(filename, "r");
     openFiles.set(file, makeWeakRef(this, closefile, this.file)));
     // now eagerly load the contents
-    this.loading = file.readAsync.then(data => this.setData(data));    
+    this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
 ```
 
@@ -505,6 +505,110 @@ normal (strong) reference to the target for the remainder of the
 current turn. Thus for example, if a GC is performed during that turn
 but after such a `get()` call the `WeakRef` is processed as a normal
 object.
+
+## Specification [Work In Progress]
+
+The specification for Weak references and finalization will include
+the `WeakRef` type and some characteristics of the runtime garbage
+collector.
+
+### WeakRef Objects
+
+A `WeakRef` is an object that is used to refer to a target object
+without preserving it from garbage collection, and to enable code to
+be run to clean up after the target is garbage collected. There is not
+a named constructor for `WeakRef` objects. Instead, `WeakRef` objects
+are created by calling a privileged system function [TBD].
+
+#### MakeWeakRef Abstract Operation
+
+The abstract operation `makeWeakRef` with arguments `target`,
+`executor`, and `holdings` is used to create such `WeakRef` objects.
+It performs the following steps:
+
+1. If Type(target) is not Object, throw a TypeError exception
+2. If SameValue(target, holdings), throw a TypeError exception
+3. If !SameValue(target, executor), throw a TypeError exception
+4. Let _currentTurn_ be GetCurrentJobReference().
+5. Let _targetRealm_ be ? GetFunctionRealm(target).
+6. Let _thisRealm_ be ? GetFunctionRealm(**this**).
+7. If SameValue(targetRealm, thisRealm), then
+  1. Let _weakRef_ be ObjectCreateSpecial(%WeakRefPrototype%, ([[Target]], [[ObservedTurn]], [[Executor]], [[Holdings]])).
+  2. Set weakRef's [[Target]] internal slot to _target_.
+  3. Set weakRef's [[ObservedTurn]] internal slot to _currentTurn_.
+  4. Set weakRef's [[Executor]] internal slot to _executor_.
+  5. Set weakRef's [[Holdings]] internal slot to _holdings_.
+8. Else
+  1. Let _weakRef_ be ObjectCreate(%WeakRefPrototype%, ([[Target]], [[ObservedTurn]], [[Executor]], [[Holdings]])).
+  2. Set weakRef's [[Target]] internal slot to _target_.
+  3. Set weakRef's [[ObservedTurn]] internal slot to _currentTurn_.
+  4. Set weakRef's [[Executor]] internal slot to **undefined**.
+  5. Set weakRef's [[Holdings]] internal slot to **undefined**.
+9. Return weakRef.
+
+NOTE `ObjectCreateSpecial` will trigger special handling of the result
+during garbage collection.
+
+#### The %WeakRefPrototype% Object
+
+All `WeakRef` objects inherit properties from the
+`%WeakRefPrototype%` intrinsic object.  The `%WeakRefPrototype%`
+object is an ordinary object and its `[[Prototype]]` internal slot is
+the `%ObjectPrototype%` intrinsic object. In addition,
+`%WeakRefPrototype%` has the following properties:
+
+##### %WeakRefPrototype%.get( )
+
+1. Let _O_ be the this value.
+2. If Type(_O_) is not Object, throw a TypeError exception.
+3. If _O_ does not have all of the internal slots of a WeakRef Instance, throw a TypeError exception.
+4. Let _currentTurn_ be GetCurrentJobReference().
+5. Set the value of the [[ObservedTurn]] internal slot of _O_ to _currentTurn_.
+6. Let _a_ be the value of the [[Target]] internal slot of _O_.
+7. Return a.
+
+##### %WeakRefPrototype%.clear( )
+1. Let _O_ be the this value.
+2. If Type(_O_) is not Object, throw a TypeError exception.
+3. If _O_ does not have all of the internal slots of a WeakRef
+    Instance, throw a TypeError exception.
+4. Set the value of the [[Target]] internal slot of O to undefined.
+5. Set the value of the [[Executor]] internal slot of O to null.
+6. Set the value of the [[Holdings]] internal slot of O to null.
+7. Return undefined.
+
+##### %WeakRefPrototype% [ @@toStringTag ]
+
+The initial value of the @@toStringTag property is the string value
+"WeakRef".
+
+#### Properties of WeakRef Instances
+
+WeakRef instances are ordinary objects that inherit properties from
+the %WeakRefPrototype% intrinsic  object. WeakRef instances are
+initially created with the internal slots listed in Table K.
+
+*Table K — Internal Slots of WeakRef Instances*
+
+| Internal Slot | Description |
+| ----- | ----- |
+| [[Target]] | The reference to the target object |
+| [[ObservedTurn]] | A unique reference associated with the the turn |
+| [[Executor]] | An optional reference to a function |
+| [[Holdings]] | Any value, passed as a parameter to [[Executor]] |
+
+#### GetCurrentJobReference
+
+`WeakRef` operations rely on runtime state. This operation returns
+reference that is uniquely associated with the current turn.
+
+#### ObjectCreateSpecial operation
+
+`ObjectCreateSpecial` is a variant object creation primitive like
+`ObjectCreate`, except that the prototype is required, and will be used
+to direct different garbage collection behavior for instances of that
+prototype. The result's `[[Extensible]]` property will be set to
+**false**.
 
 # GC Implementation Approach
 
