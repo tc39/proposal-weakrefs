@@ -162,7 +162,7 @@ assert(wr.get() === original);
 original = undefined;
 // full GC and finalization happens here
 assert(wr.get() === null);
-assert(buff.isReleased);
+assert(buf.isReleased);
 ```
 
 # Additional Requirements and Discussion
