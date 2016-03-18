@@ -140,9 +140,10 @@ Target. It adds the Executor, which will be invoked to clean up after
 the Target, using the Holdings (e.g., return the internal file buffer
 to buffer pool).
 
-##  Usage Example
+## Basic Usage
 
-The below example shows some characteristics of basic usage
+The root of the API is the `makeWeakRef` operation to construct a weak
+reference.
 
 ```js
 // Make a new weak reference.
@@ -153,10 +154,14 @@ The below example shows some characteristics of basic usage
 // The holdings is an optional argument that will be provided to the
 // executor when it is invoked for target.
 makeWeakRef(target, executor, holdings);
+```
 
+This brief example shows the usage and core behavior of the API.
+```js
 let buf = pool.getBuf();
 let original = someObject(buf);
-let wr = makeWeakRef(original, (buffer) => { buffer.release() }, buf);
+let executor = buffer => buffer.release();
+let wr = makeWeakRef(original, executor, buf);
 // full GC and finalization happens here
 assert(wr.get() === original);
 original = undefined;
@@ -164,6 +169,54 @@ original = undefined;
 assert(wr.get() === null);
 assert(buf.isReleased);
 ```
+
+## Expanded Example
+
+This example shows a typical pattern of finalization for a simple
+remote reference implementation. `RemoteConnection` manages the client
+side references to objects on a server. Each remote reference is
+represented on the wire with an index (called `remoteId`, below). The
+`makeResultRemoteRef` operation creates the appropriate local object
+and arranges so that when that object is condemned, finalization will
+invoke `dropRef` in order to remove the associated bookkeeping and
+notify the server that the client is no longer referencing that
+object.
+
+```js
+
+class RemoteConnection {
+
+  constructor(transport) {
+    this.transport = transport; // the low-level communication channel
+    this.executor = remoteId => this.dropRef(remoteId);
+    this.remotes = new Map();  // map from id to weakRef
+    ??? // more construction
+  }
+
+  // Create a remote reference for a remote return result. Setup  
+  // finalization to clean up after it if it is garbge collected.
+  makeResultRemoteRef(remoteId) {
+    let remoteRef = ???; // remoteRef construction elided
+    this.remotes.set(remoteId, makeWeakRef(remoteRef, this.executor, remoteId));
+    return remoteRef;
+  }
+
+  // The remote reference object has been garbage collected. Discard  
+  // the associated bookeeping and notify the server that it is no 
+  // longer referenced.
+  dropRef(remoteId) {
+    this.transport.send("DROP", remoteId);
+    this.remotes.delete(remoteId);
+  }
+}
+```
+
+It is useful to note that in this scenario, the holdings for each
+remote reference is simply the remoteId itself. Additionally, if the 
+entire remote connection is garbage-collected, then there's no need
+to do perform finalization for any of these remote references. Thus 
+finalization of the remote references created for the connection is
+scoped to the connection.
 
 # Additional Requirements and Discussion
 
@@ -349,8 +402,8 @@ functions for each new weak reference is more susceptible to this
 issue.
 
 An example with file stream construction that arranges the underlying
-file to be closed. The last line of the constructor is deliberately
-unrelated code that uses a function.
+file to be closed (with an optional warning). The last line of the
+constructor is deliberately unrelated code that uses a function.
 ```js
 const openfiles = new Map();
 
@@ -358,6 +411,7 @@ const openfiles = new Map();
 const closeFile(file) {
   file.close();
   openFiles.delete(file);
+  console.info("Filestream dropped before close: ", file.name)
 }
 
 class FileStream {
