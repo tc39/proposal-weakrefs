@@ -777,6 +777,9 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
   }
 };
 
+// The following internal Mark and finalization methods are on
+// each WeakRef instance.
+
 // Called by gc as part of its normal mark phase.
 function [[WeakRefMark]](weakref) {
   MARK(weakref.[[Executor]]);
