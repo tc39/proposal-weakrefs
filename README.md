@@ -8,4 +8,4 @@
 
 ## Todo
 
-* Finish stage 1 proposal for presentation in March
+* Present in March for stage 1 approval
