@@ -416,17 +416,16 @@ const closeFile(file) {
 
 class FileStream {
   constructor(filename) {
-    let file = new File(filename, "r");
-    this.file = file;
-    openFiles.set(file, makeWeakRef(this, () => closeFile(file)));
+    this.file = new File(filename, "r");
+    openFiles.set(file, makeWeakRef(this, () => closeFile(this.file)));
     // now eagerly load the contents
     this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
 }
 ```
 The constructor code straightforward, but unfortunately closes over
-the file stream target, and therefore prevents garbage collection
-of it. A more careful variant is:
+the file stream target `this`, and therefore prevents garbage 
+collection of it. A more careful variant is:
 ```js
 class FileStream {
   constructor(filename) {
@@ -529,8 +528,8 @@ weak references API.
 ```js
 makeWeakRef : function(
                 target   : object,
-                executor = void 0 : function(holdings : any) -> undefined,
-                holdings = void 0 : any) -> WeakRef
+                executor : undefined | function(holdings : any) -> undefined,
+                holdings : any) -> WeakRef
 WeakRef     : object {
                 get   : function() -> object | void 0
                 clear : function() -> void 0
@@ -586,15 +585,16 @@ It performs the following steps:
 1. If Type(executor) is not Undefined or Type(executor) is not Function, throw a TypeError exception
 2. If SameValue(target, holdings), throw a TypeError exception
 3. If SameValue(target, executor), throw a TypeError exception
-4. Let _currentTurn_ be GetCurrentJobReference().
-5. Let _targetRealm_ be ? GetFunctionRealm(target).
-6. Let _thisRealm_ be ? GetFunctionRealm(**this**).
+4. Let _currentTurn_ be ! GetCurrentJobReference().
+5. Let _targetRealm_ be ! GetFunctionRealm(target).
+6. Let _thisRealm_ be ! GetFunctionRealm(**this**).
 7. If SameValue(targetRealm, thisRealm), then
-  1. Let _weakRef_ be ObjectCreateSpecial(%WeakRefPrototype%, ([[Target]], [[ObservedTurn]], [[Executor]], [[Holdings]])).
+  1. Let _weakRef_ be ObjectCreate(%WeakRefPrototype%, ([[Target]], [[ObservedTurn]], [[Executor]], [[Holdings]])).
   2. Set weakRef's [[Target]] internal slot to _target_.
   3. Set weakRef's [[ObservedTurn]] internal slot to _currentTurn_.
   4. Set weakRef's [[Executor]] internal slot to _executor_.
   5. Set weakRef's [[Holdings]] internal slot to _holdings_.
+  6. Set all weakRef's garbage collection internal operations.
 8. Else
   1. Let _weakRef_ be ObjectCreate(%WeakRefPrototype%, ([[Target]], [[ObservedTurn]], [[Executor]], [[Holdings]])).
   2. Set weakRef's [[Target]] internal slot to _target_.
@@ -602,9 +602,6 @@ It performs the following steps:
   4. Set weakRef's [[Executor]] internal slot to **undefined**.
   5. Set weakRef's [[Holdings]] internal slot to **undefined**.
 9. Return weakRef.
-
-NOTE `ObjectCreateSpecial` will trigger special handling of the result
-during garbage collection.
 
 #### The %WeakRefPrototype% Object
 
@@ -619,7 +616,7 @@ the `%ObjectPrototype%` intrinsic object. In addition,
 1. Let _O_ be the this value.
 2. If Type(_O_) is not Object, throw a TypeError exception.
 3. If _O_ does not have all of the internal slots of a WeakRef Instance, throw a TypeError exception.
-4. Let _currentTurn_ be GetCurrentJobReference().
+4. Let _currentTurn_ be ! GetCurrentJobReference().
 5. Set the value of the [[ObservedTurn]] internal slot of _O_ to _currentTurn_.
 6. Let _a_ be the value of the [[Target]] internal slot of _O_.
 7. Return a.
@@ -658,14 +655,6 @@ initially created with the internal slots listed in Table K.
 
 `WeakRef` operations rely on runtime state. This operation returns
 reference that is uniquely associated with the current turn.
-
-#### ObjectCreateSpecial operation
-
-`ObjectCreateSpecial` is a variant object creation primitive like
-`ObjectCreate`, except that the prototype is required, and will be used
-to direct different garbage collection behavior for instances of that
-prototype. The result's `[[Extensible]]` property will be set to
-**false**.
 
 # GC Implementation Approach
 
@@ -741,16 +730,25 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
   if (target === executor) {
     throw new TypeError('Target cannot be used to clean up itself');
   }
+  if (typeof executor !== 'function' || executor !== null) {
+    throw new TypeError('Executor must be callable, if provided');
+  }
   if (REALM_OF(target) === REALM_OF(makeWeakRef)) {
     return {
       __proto__: %WeakRefPrototype%,
-      WEAK [[Target]]: target,  
+      [[Target]]: target,  // WEAK
       [[ObservedTurn]]: [[CURRENT_TURN]],
       [[Executor]]: executor,
       [[Holdings]]: holdings,
     };
   } else {
-    // For cross-realm targets, the [[Target]] slot is not weak.
+    // For cross-realm targets, the target is also copied into 
+    // holdings so that it is pointed to strongly by the WeakRef.
+    // Since a cross-realm weakRef is just strong, the target will be 
+    // retained at least as long as the weakRef. Therefore 
+    // finalization can ever be triggered and the supplied executor 
+    // and holdings can never be used. So this just uses the holdings
+    // internal slot to strongly point at the target.
     return {
       __proto__: %WeakRefPrototype%,
       [[Target]]: target,
@@ -758,7 +756,7 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
       // the Target is strongly held by the WeakRef so finalization
       // for Target will never happen. Therefore we don't need these
       [[Executor]]: void 0,
-      [[Holdings]]: void 0,
+      [[Holdings]]: target,
     };    
   }
 }
@@ -784,6 +782,7 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
 function [[WeakRefMark]](weakref) {
   MARK(weakref.[[Executor]]);
   MARK(weakref.[[Holdings]]);
+  MARK(weakref.[[ObservedTurn]]);
   if (weakref.[[ObservedTurn]] === [[CURRENT_TURN]]) {
     MARK(weakref.[[Target]]);
     return;
@@ -868,12 +867,14 @@ it's trivially available to provide.
 
 # References
 
- * [[http://msdn.microsoft.com/en-us/data/gg577609|Rx.js]]
- * [[http://worrydream.com/Tangle/|Tangle]]
- * [[http://dherman.github.com/taskjs|task.js]]
- * [[http://sproutcore.com/|SproutCore]]
- * [[http://flapjax-lang.org/|Flapjax]]
- * [[http://docs.oracle.com/javase/1.5.0/docs/api/java/lang/ref/WeakReference.html|Java WeakReference]]
+ * [Automatic storage-reclamation postmortem finalization process](http://www.google.com/patents/US5274804)
+ * [pre-mortem finalization challenges](http://blogs.msdn.com/b/cbrumme/archive/2004/02/20/77460.aspx)
+ * [Python Weak References](https://docs.python.org/2/library/weakref.html)
+ * [Java WeakReference](https://docs.oracle.com/javase/7/docs/api/java/lang/ref/WeakReference.html)
+ * [C# Weak References](https://msdn.microsoft.com/en-us/library/ms404247.aspx)
+ * [Racket Ephmerons](https://docs.racket-lang.org/reference/ephemerons.html)
+ * [Ephemerons](https://pdfs.semanticscholar.org/1803/a320584a35b797ca6089e8240393505ad410.pdf)
+ * [Smalltalk VisualWorks WeakArrays](http://esug.org/data/Old/vw-tutorials/Adv_VWNotPrintable/Weak_References.pdf)
 
 
 [ECMAScript language value]:      https://people.mozilla.org/~jorendorff/es6-draft.html#sec-ecmascript-language-types
