@@ -124,10 +124,10 @@ or not at any particular time.
 [Pre-weakref](pre-structure.svg) The first diagram shows the objects
 in an example scenario before weak references are used.
 
-  * A client gets the target (e.g., a file) from the service object
-    (e.g., the file manager)
+  * A client gets the target (e.g., a remote reference) from the 
+    service object (e.g., the remote connection)
   * The target allocates/uses Holdings to accomplish it's function
-    (e.g., an internal file buffer)
+    (e.g., a remote reference index)
   * The Service Object wants to clean up using the holdings after the
     target is "done"
 
@@ -137,8 +137,7 @@ preventing it from getting collected.
 [With-weakref](weakref-structure.svg) The second diagram inserts the
 weak reference in the reference path from the Service Object to the
 Target. It adds the Executor, which will be invoked to clean up after
-the Target, using the Holdings (e.g., return the internal file buffer
-to buffer pool).
+the Target, using the Holdings (e.g., drop the remote reference).
 
 ## Basic Usage
 
@@ -361,7 +360,7 @@ function makeWeakRef(target, executor = void 0, holdings = void 0) {
 }
 ```
 NOTE A more complete version of this code is at the end of the
-document, which avoids allocations and and covers more cases and
+document, which avoids allocations and covers more cases and
 subtleties.
 
 ## Allocation During GC and Finalization
@@ -431,7 +430,7 @@ class FileStream {
   constructor(filename) {
     let file = new File(filename, "r");
     this.file = file;
-    openFiles.set(file, makeWeakRef(this, () => closeFile(file))));
+    openFiles.set(file, makeWeakRef(this, () => closeFile(file)));
     // now eagerly load the contents
     this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
@@ -448,7 +447,7 @@ class FileStream {
   constructor(filename) {
     let file = new File(filename, "r");
     this.file = file;
-    openFiles.set(file, makeWeakRef(this, closefile, file)));
+    openFiles.set(file, makeWeakRef(this, closefile, file));
     // now eagerly load the contents
     this.loading = file.readAsync().then(data => this.setData(data));    
   }, ...
