@@ -2,10 +2,10 @@
 
 ## Status
 
-* WeakReferences are now Stage 0
+* WeakReferences are now Stage 1
 * Dean Tribble is champion, with Mark Miller supporting
-* Initial stage 1 proposal is ready for feedback
 
 ## Todo
 
-* Present in March for stage 1 approval
+* Work with runtime folks to get experimental implementation
+* Garner example usage
