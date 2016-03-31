@@ -817,7 +817,7 @@ function [[WeakRefFinalize]](weakref){
   if (typeof exec === 'function') {
     let hold = weakref.[[Holdings]];
     weakref.clear();
-    exec(hold);
+    exec(hold, weakRef);
   }
 };
 
