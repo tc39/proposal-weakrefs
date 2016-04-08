@@ -482,7 +482,7 @@ WeakRef is unreachable, and therefore will never require finalization.
 Security demands only that such inter-realm references not point
 weakly.
 
-See [https://mail.mozilla.org/pipermail/es-discuss/2013-January/028542.html]()
+See [https://mail.mozilla.org/pipermail/es-discuss/2013-January/028542.html](https://mail.mozilla.org/pipermail/es-discuss/2013-January/028542.html)
 for a nice refinement for pointing weakly at objects from a set of
 realms.
 
