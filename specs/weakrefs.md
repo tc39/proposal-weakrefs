@@ -581,7 +581,7 @@ The abstract operation `makeWeakRef` with arguments `target`,
 It performs the following steps:
 
 1. If Type(target) is not Object, throw a TypeError exception
-1. If Type(executor) is not Undefined or Type(executor) is not Function, throw a TypeError exception
+1. If Type(executor) is neither Undefined nor Function, throw a TypeError exception
 2. If SameValue(target, holdings), throw a TypeError exception
 3. If SameValue(target, executor), throw a TypeError exception
 4. Let _currentTurn_ be ! GetCurrentJobReference().
