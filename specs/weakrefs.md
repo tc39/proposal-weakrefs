@@ -213,7 +213,7 @@ class RemoteConnection {
 It is useful to note that in this scenario, the holdings for each
 remote reference is simply the remoteId itself. Additionally, if the 
 entire remote connection is garbage-collected, then there's no need
-to do perform finalization for any of these remote references. Thus 
+to perform finalization for any of these remote references. Thus 
 finalization of the remote references created for the connection is
 scoped to the connection.
 
