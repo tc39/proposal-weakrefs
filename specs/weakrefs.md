@@ -875,6 +875,7 @@ it's trivially available to provide.
  * [Ephemerons](https://pdfs.semanticscholar.org/1803/a320584a35b797ca6089e8240393505ad410.pdf)
  * [Smalltalk VisualWorks WeakArrays](http://esug.org/data/Old/vw-tutorials/Adv_VWNotPrintable/Weak_References.pdf)
  * [WeakRefs for wasm-gc](https://github.com/WebAssembly/gc/blob/master/proposals/gc/Overview.md#possible-extension-weak-references-and-finalisation)
+ * [Mozilla feature request issue](https://bugzilla.mozilla.org/show_bug.cgi?id=1367476)
  * [Bradley Meck's "weakref" branch of v8](https://github.com/bmeck/v8/commits/weakref) starting at commit named "[api] Prototype WeakRef implementation"
 
 
