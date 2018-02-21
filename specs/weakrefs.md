@@ -269,7 +269,7 @@ may collect a weakly-held object at different times, which a
 `makeWeakRef` function is not safe for general access since it
 grants access to the non-determinism inherent in observing garbage
 collection. The resulting side channel reveals information that may
-violate the [confidentiality assumptions](http://wiki.ecmascript.org/doku.php?id=strawman:gc_semantics)
+violate the [confidentiality assumptions](https://web.archive.org/web/20160318124045/http://wiki.ecmascript.org/doku.php?id=strawman:gc_semantics)
 of other programs. Therefore we add `makeWeakRef` to the `System`
 object, just like other authority-bearing objects, e.g.,
 [the default loader](https://github.com/whatwg/loader/issues/34).
