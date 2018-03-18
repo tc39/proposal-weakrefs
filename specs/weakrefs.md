@@ -1,6 +1,6 @@
 # NOT CURRENT. PLEASE SEE PRESENTATION
 
-While much of this document is still relevant, the spec and background information _documents_ are still being revised. For information on the current proposal, please see the (current slides)[https://github.com/tc39/proposal-weakrefs/blob/master/specs/Weak%20References%20for%20EcmaScript.pdf]. They are up to date.
+While much of this document is still relevant, the spec and background information _documents_ are still being revised. For information on the current proposal, please see the [current slides](https://github.com/tc39/proposal-weakrefs/blob/master/specs/Weak%20References%20for%20EcmaScript.pdf). They are up to date.
 
 # Background
 
