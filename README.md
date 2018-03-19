@@ -1,8 +1,12 @@
 # WeakReferences TC39 proposal
 
-[Explanation](https://github.com/tc39/proposal-weakrefs/blob/master/specs/weakrefs.md)
+[Initial Spec-text](https://github.com/tc39/proposal-weakrefs/blob/master/specs/spec.md)
 
 [Slides](https://github.com/tc39/proposal-weakrefs/blob/master/specs/Weak%20References%20for%20EcmaScript.pdf)
+
+## Deprecated docs that are still useful
+
+[OLD Explanation](https://github.com/tc39/proposal-weakrefs/blob/master/specs/weakrefs.md)
 
 [WeakRefGroups](https://github.com/tc39/proposal-weakrefs/wiki/WeakRefGroups): Likely refactoring of API surface
 
@@ -15,6 +19,3 @@
 * Dean Tribble is champion, with Mark Miller supporting
 
 ## Todo
-
-* Work with runtime folks to get experimental implementation
-* Garner example usage
