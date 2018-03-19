@@ -272,13 +272,11 @@ the following steps:
 1. Assert: Type(_factory_) is Object.
 1. Assert: _factory_ has all of the internal slots of a WeakFactory Instance.
 1. Let _iterator_ be ObjectCreate(%ReclaimedIteratorPrototype%, « [[Factory]] »).
-1. Set _iterator_.[[WeakFactory]] = factory.
-1. Let _next_ be a new built-in function defined in WeakFactoryCleanupIterator **next**.
+1. Set _iterator_.[[WeakFactory]] = _factory_.
+1. Let _next_ be a new built-in function defined in `WeakFactoryCleanupIterator` **next**.
 1. Perform CreateMethodProperty(_iterator_, **next**, _next_).
-1. Return _iterator_.
-
-NOTE
-This Job uses the supplied thenable and its then method to resolve the given promise. This process must take place as a Job to ensure that the evaluation of the then method occurs after evaluation of any surrounding code has completed.
+1. Call _factory_.[[Cleanup]](_iterator_).
+1. Return **undefined**
 
 ### WeakFactoryCleanupIterator.next()
 
