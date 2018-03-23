@@ -12,10 +12,18 @@
 
 [Support for long wasm jobs](https://github.com/tc39/proposal-weakrefs/wiki/Support-for-long-wasm-jobs): Possible additional APIs for non-JS top levels that don't yield.
 
+## Champions
+
+* Dean Tribble
+* Mark Miller
+* Till Schneidereit 
 
 ## Status
 
-* WeakReferences are now Stage 1
-* Dean Tribble is champion, with Mark Miller supporting
+* WeakReferences are now Stage 2
+* Till Schneidereit has joined as a co-champion
+* Bradley Meck has a V8 implementation of the old API. He will be updating it to the new API.
+* Till has a prototype of the new API in the SPideRMonkey console
+
 
 ## Todo
