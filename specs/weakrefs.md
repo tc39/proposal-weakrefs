@@ -3,8 +3,7 @@
 While much of this document is still relevant, the spec and background
 information _documents_ are still being revised. For information on
 the current proposal, please see the [current
-slides](https://github.com/tc39/proposal-
-weakrefs/blob/master/specs/Weak%20References%20for%20EcmaScript.pdf).
+slides](https://github.com/tc39/proposal-weakrefs/blob/master/specs/Weak%20References%20for%20EcmaScript.pdf).
 They are up to date.
 
 [Initial Spec-text](https://github.com/tc39/proposal-weakrefs/blob/master/specs/spec.md)
