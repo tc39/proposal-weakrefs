@@ -25,10 +25,9 @@ When WeakFactory is called with argument _cleanup_, it performs the following st
 1. Let _O_ be ? OrdinaryCreateFromConstructor(NewTarget, "%WeakFactoryPrototype%", « [[WeakFactory]] »).
 1. If _cleanup_ is *undefined*, then
     1. Set _O_.[[Cleanup]] to undefined.
-    1. Set _O_[[ActiveCells]] to undefined.
 1. Else
     1. Set _O_.[[Cleanup]] to _cleanup_.
-    1. Set _O_[[ActiveCells]] to a new empty List.
+1. Set _O_.[[ActiveCells]] to a new empty List.
 1. Set _O_.[[HasDirty]] to false.
 1. Perform ! RegisterWeakFactory(_O_).
 1. Return _O_
