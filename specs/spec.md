@@ -101,7 +101,7 @@ Table K.
 | Internal Slot | Description |
 | ----- | ----- |
 | [[Cleanup]] | An optional reference to a function |
-| [[ActiveCells]] | WeakRefs that are Actve or Dirty. |
+| [[ActiveCells]] | WeakRefs that are Active or Dirty. |
 | [[HasDirty]] | True if some of ActiveCells has become Dirty. |
 
 ## WeakCell Objects
