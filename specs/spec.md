@@ -128,11 +128,11 @@ WeakCell.prototype.clear() performs the following steps:
 1. If Type(_O_) is not Object, throw a TypeError exception.
 1. If _O_ does not have all of the internal slots of a WeakCell
    Instance, throw a TypeError exception.
-1. Let _factory be _O_.[[WeakFactory]].
+1. Let _factory be _O_.[[Factory]].
 1. If _factory_ is not **undefined**.
     1. Remove _O_ from _factory_.[[ActiveCells]].
     1. Set _O_.[[Target]] to undefined.
-    1. Set _O_.[[WeakFactory]] to undefined.
+    1. Set _O_.[[Factory]] to undefined.
     1. Set _O_.[[Holdings]] to undefined.
 1. Return **undefined**.
 
