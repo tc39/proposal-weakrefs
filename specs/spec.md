@@ -259,7 +259,7 @@ _agent_, it performs the following steps:
 
 1. Assert: Type(_agent_) is Object.
 1. Assert: _agent_ has all of the internal slots of an Agent Instance.
-1. For each _factory_ in _agent_.[[WeakFactories]
+1. For each _factory_ in _agent_.[[WeakFactories]]
     1. If _factory_.[[HasDirty]], then 
         1. Perform EnqueueJob("WeakCellJobs", WeakFactoryCleanupJob, « _factory_ »).
 
