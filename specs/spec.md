@@ -163,7 +163,7 @@ initially created with the internal slots listed in Table L.
 | Internal Slot | Description |
 | ----- | ----- |
 | [[Target]] | The reference to the target object |
-| [[Factory]] | AThe factory that created thie object |
+| [[Factory]] | AThe factory that created the object |
 | [[Holdings]] | Any value, passed as a parameter to the cleanup function in the factory |
 
 ## WeakRef Objects
