@@ -274,7 +274,7 @@ the following steps:
 1. Set _iterator_.[[WeakFactory]] = _factory_.
 1. Let _next_ be a new built-in function defined in `WeakFactoryCleanupIterator` **next**.
 1. Perform CreateMethodProperty(_iterator_, **next**, _next_).
-1. Call _factory_.[[Cleanup]](_iterator_).
+1. Call _factory_.[[Cleanup]]\(_iterator_).
 1. Return **undefined**
 
 ### WeakFactoryCleanupIterator.next()
