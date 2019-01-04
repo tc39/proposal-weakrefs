@@ -1,0 +1,52 @@
+<emu-clause id="sec-abstract-jobs">
+  <h1> Abstract Jobs </h1>
+
+  <emu-clause id="sec-do-agent-finalization" aoid="DoAgentFinalization">
+    <h1> DoAgentFinalization ( _finalizationGroup_ )</h1>
+    <p> The following steps are performed: </p>
+    <emu-alg>
+      1. For each _finalizationGroup_ in _agent_.[[FinalizationGroups]], do
+        1. Let _hasEmptyCell_ be ! CheckForEmptyCells(_finalizationGroup_).
+        1. If _hasEmptyCell_ is *true* then,
+          1. Perfom EnqueueJob(`"FinalizationJob"`, FinalizationGroupCleanupJob, &laquo; _finalizationGroup_ &raquo;).
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-check-for-empty-cells" aoid="CheckForEmptyCells">
+    <h1> CheckForEmptyCells ( _finalizationGroup_ ) </h1>
+    <p> The following steps are performed: </p>
+    <emu-alg>
+      1. Assert: _finalizationGroup_ has an [[Cells] internal slot.
+      1. For each _cell_ in _finalizationGroup_.[[Cells]], do
+        1. If _cell_.[[Target]] is empty then,
+          1. Return *true*.
+      1. Return *false*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-finalization-group-cleanup-job" aoid="FinalizationGroupCleanupJob">
+    <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ ) </h1>
+    <p> The following steps are performed: </p>
+    <emu-alg>
+      1. Assert: _finalizationGroup_ has [[Cells] and
+      [[CleanupCallback]] internal slots.
+      1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
+      1. Let _callback_ be _finalizationGroup_.[[CleanupCallback]].
+      1. Perform ? Call(_callback_, undefined, iterator).
+      1. Return *undefined*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-keepduringjob" aoid="KeepDuringJob">
+    <h1> KeepDuringJob </h1>
+    <p>
+      When the abstract operation
+      KeepDuringJob is called with a target object reference, it adds the
+      target to an identity Set that will point strongly at the target until
+      the end of the current Job. This may be abstractly implemented as a
+      Set in the current Job that becomes unreachable when the Job ends
+      because the Job becomes unreachable, or as a Set in the current Agent
+      that gets cleared at the end of each Job.
+    </p>
+  </emu-clause>
+</emu-clause>
