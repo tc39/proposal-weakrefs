@@ -68,7 +68,7 @@
       1. Let _agent_ be the surrounding agent.
       1. For each _finalizationGroup_ in _agent_.[[FinalizationGroups]], do
         1. Let _hasEmptyCell_ be ! CheckForEmptyCells(_finalizationGroup_).
-        1. If _hasEmptyCell_ is *true* then,
+        1. If _hasEmptyCell_ is *true*, then
           1. Perfom EnqueueJob(`"FinalizationJob"`, FinalizationGroupCleanupJob, &laquo; _finalizationGroup_ &raquo;).
       1. Set _agent_.[[KeptAlive]] to a new empty List.
     </emu-alg>
@@ -85,7 +85,7 @@
     <emu-alg>
       1. Assert: _finalizationGroup_ has an [[Cells]] internal slot.
       1. For each _cell_ in _finalizationGroup_.[[Cells]], do
-        1. If _cell_.[[Target]] is empty then,
+        1. If _cell_.[[Target]] is ~empty~, then
           1. Return *true*.
       1. Return *false*.
     </emu-alg>
@@ -99,7 +99,7 @@
       [[CleanupCallback]] internal slots.
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
       1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
-      1. Perform ? Call(_callback_, undefined, iterator).
+      1. Perform ? Call(_callback_, *undefined*, _iterator_).
       1. Return *undefined*.
     </emu-alg>
   </emu-clause>
