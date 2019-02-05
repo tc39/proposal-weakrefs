@@ -16,7 +16,7 @@
     <h1> CheckForEmptyCells ( _finalizationGroup_ ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
-      1. Assert: _finalizationGroup_ has an [[Cells] internal slot.
+      1. Assert: _finalizationGroup_ has an [[Cells]] internal slot.
       1. For each _cell_ in _finalizationGroup_.[[Cells]], do
         1. If _cell_.[[Target]] is empty then,
           1. Return *true*.
@@ -28,7 +28,7 @@
     <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ [ , _callback_ ] ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
-      1. Assert: _finalizationGroup_ has [[Cells] and
+      1. Assert: _finalizationGroup_ has [[Cells]] and
       [[CleanupCallback]] internal slots.
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
       1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
