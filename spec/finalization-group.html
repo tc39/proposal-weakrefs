@@ -44,7 +44,7 @@
         1. If NewTarget is *undefined*, throw a *TypeError* exception.
         1. If Type(_cleanupCallback_) is not Callable, throw a *TypeError* exception.
         1. Let _finalizationGroup_ be ? OrdinaryCreateFromConstructor(NewTarget,
-        `"%FinalizationGroupPrototype%"`, &laquo; [[ CleanupCallback, Cells ]] &raquo;).
+        `"%FinalizationGroupPrototype%"`, &laquo; [[CleanupCallback]], [[Cells]] &raquo;).
         1. Set _finalizationGroup_.[[CleanupCallback]] to _cleanupCallback_.
         1. Set _finalizationGroup_.[[Cells]] to be an empty List.
         1. Return _finalizationGroup_.

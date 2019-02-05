@@ -45,7 +45,7 @@
         1. If NewTarget is *undefined*, throw a *TypeError* exception.
         1. If Type(_target_) is not Object, throw a *TypeError* exception.
         1. Let _weakRef_ be ? OrdinaryCreateFromConstructor(NewTarget,
-        `"%WeakRefPrototype%"`, &laquo; [[ Target ]] &raquo;).
+        `"%WeakRefPrototype%"`, &laquo; [[Target]] &raquo;).
         1. Perfom ! KeepDuringJob(_target_).
         1. Set _weakRef_.[[Target]] to _target_.
         1. Return _weakRef_.
