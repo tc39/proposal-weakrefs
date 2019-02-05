@@ -228,14 +228,11 @@
             1. If _finalizationGroup_ is *undefined*, then
               1. Return CreateIterResultObject(*undefined*, *true*).
             1. Assert: _finalizationGroup_ has [[Cells]] internal slot.
-            1. For each Record { [[Target]], [[Holdings]],
-            [[UnregisterToken]] } _cell_ that is an element of
-            _finalizationGroup_.[[Cells]], do
-              1. If _cell_.[[Target]] is *empty*, then
-                1. Remove _cell_ from _finalizationGroup_.[[Cells]].
-                1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
-            1. Set _iterator_.[[FinalizationGroup]] to *undefined*.
-            1. Return CreateIterResultObject(undefined, true).
+            1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is *empty*,
+              1. Choose any such _cell_.
+              1. Remove _cell_ from _finalizationGroup_.[[Cells]].
+              1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
+            1. Otherwise, return CreateIterResultObject((*undefined*, *true*).
           </emu-alg>
      </emu-clause>
 
