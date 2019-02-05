@@ -121,7 +121,7 @@
         1. If _weakRef_ does not have a [[Target]] internal slot,
         throw a *TypeError* exception.
         1. Let _target_ be the value of _weakRef_.[[Target]].
-        1. If _target_ is not empty,
+        1. If _target_ is not ~empty~,
           1. Perform ! KeepDuringJob(_target_).
           1. Return _target_.
         1. Return *undefined*.

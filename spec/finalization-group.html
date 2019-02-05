@@ -47,6 +47,8 @@
         `"%FinalizationGroupPrototype%"`, &laquo; [[CleanupCallback]], [[Cells]] &raquo;).
         1. Set _finalizationGroup_.[[CleanupCallback]] to _cleanupCallback_.
         1. Set _finalizationGroup_.[[Cells]] to be an empty List.
+        1. Let _agent_ be the surrounding agent.
+        1. Append _finalizationGroup_ to _agent_.[[FinalizationGroups]].
         1. Return _finalizationGroup_.
     </emu-clause>
   </emu-clause>
@@ -228,7 +230,7 @@
             1. If _finalizationGroup_ is *undefined*, then
               1. Return CreateIterResultObject(*undefined*, *true*).
             1. Assert: _finalizationGroup_ has [[Cells]] internal slot.
-            1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is *empty*,
+            1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is ~empty~,
               1. Choose any such _cell_.
               1. Remove _cell_ from _finalizationGroup_.[[Cells]].
               1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
