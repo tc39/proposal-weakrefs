@@ -25,13 +25,13 @@
   </emu-clause>
 
   <emu-clause id="sec-finalization-group-cleanup-job" aoid="FinalizationGroupCleanupJob">
-    <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ ) </h1>
+    <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ [ , _callback_ ] ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
       1. Assert: _finalizationGroup_ has [[Cells] and
       [[CleanupCallback]] internal slots.
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
-      1. Let _callback_ be _finalizationGroup_.[[CleanupCallback]].
+      1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
       1. Perform ? Call(_callback_, undefined, iterator).
       1. Return *undefined*.
     </emu-alg>

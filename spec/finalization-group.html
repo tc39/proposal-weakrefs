@@ -155,7 +155,7 @@
     </emu-clause>
 
     <emu-clause id="sec-finalization-group.prototype.cleanupSome">
-      <h1>FinalizationGroup.prototype.cleanupSome ( )</h1>
+      <h1>FinalizationGroup.prototype.cleanupSome ( [ _callback_ ] )</h1>
       <p>The following steps are taken:</p>
       <emu-alg>
         1. Let _finalizationGroup_ be the *this* value.
@@ -163,7 +163,7 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
-        1. Perform ! FinalizationGroupCleanupJob(_finalizationGroup_).
+        1. Perform ! FinalizationGroupCleanupJob(_finalizationGroup_, _callback_).
         1. Return *undefined*.
       </emu-alg>
     </emu-clause>
