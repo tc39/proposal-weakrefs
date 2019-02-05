@@ -144,13 +144,14 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
+        1. Let _removed_ be *false*.
         1. For each Record { [[Target]], [[Holdings]],
         [[UnregisterToken]] } _cell_ that is an element of
         _finalizationGroup_.[[Cells]], do
           1. If SameValue(_cell_.[[UnregisterToken]], _unregisterToken_) is *true*, then
             1. Remove _cell_ from _finalizationGroup_.[[Cells]].
-            1. Return *true*.
-        1. Return *false*.
+            1. Set _removed_ to *true*.
+        1. Return _removed_.
       </emu-alg>
     </emu-clause>
 
