@@ -1,45 +1,116 @@
 <emu-clause id="sec-abstract-jobs">
   <h1> Abstract Jobs </h1>
 
+    <emu-table id="table-agent-record" caption="Agent Record Fields">
+      <table>
+        <tbody>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+          <tr>
+            <td>[[LittleEndian]]</td>
+            <td>Boolean</td>
+            <td>The default value computed for the <em>isLittleEndian</em> parameter when it is needed by the algorithms GetValueFromBuffer and SetValueInBuffer. The choice is implementation-dependent and should be the alternative that is most efficient for the implementation.  Once the value has been observed it cannot change.</td>
+          </tr>
+          <tr>
+            <td>[[CanBlock]]</td>
+            <td>Boolean</td>
+            <td>Determines whether the agent can block or not.</td>
+          </tr>
+          <tr>
+            <td>[[Signifier]]</td>
+            <td>Any globally-unique value</td>
+            <td>Uniquely identifies the agent within its agent cluster.</td>
+          </tr>
+          <tr>
+            <td>[[IsLockFree1]]</td>
+            <td>Boolean</td>
+            <td>*true* if atomic operations on one-byte values are lock-free, *false* otherwise.</td>
+          </tr>
+          <tr>
+            <td>[[IsLockFree2]]</td>
+            <td>Boolean</td>
+            <td>*true* if atomic operations on two-byte values are lock-free, *false* otherwise.</td>
+          </tr>
+          <tr>
+            <td>[[CandidateExecution]]</td>
+            <td>A candidate execution Record</td>
+            <td>See the memory model.</td>
+          </tr>
+          <tr>
+            <td><ins>[[KeptAlive]]</ins></td>
+            <td><ins>List of objects</ins></td>
+            <td><ins>Initially a new empty List, representing the list of objects to be kept alive until the end of the current Job</ins></td>
+          </tr>
+          <tr>
+            <td><ins>[[FinalizationGroups]]</ins></td>
+            <td><ins>List of FinalizationGroup objects</ins></td>
+            <td><ins>Initially a new empty List, representing the set of all FinalizationGroups</ins></td>
+          </tr>
+        </tbody>
+      </table>
+    </emu-table>
+
+  <p>
+    At any given time, if all references to a ECMAScript object are from a
+    [[Target]] field or internal slot, and KeepDuringJob was not called on the
+    object during current RunJobs algorithm/since the last microtask checkpoint,
+    the implementation MAY replace the reference to the object in all such
+    [[Target]] fields or internal slots with the value ~empty~.
+  </p>
+
   <emu-clause id="sec-do-agent-finalization" aoid="DoAgentFinalization">
-    <h1> DoAgentFinalization ( _finalizationGroup_ )</h1>
+    <h1> DoAgentFinalization ( )</h1>
     <p> The following steps are performed: </p>
     <emu-alg>
+      1. Let _agent_ be the surrounding agent.
       1. For each _finalizationGroup_ in _agent_.[[FinalizationGroups]], do
         1. Let _hasEmptyCell_ be ! CheckForEmptyCells(_finalizationGroup_).
-        1. If _hasEmptyCell_ is *true* then,
+        1. If _hasEmptyCell_ is *true*, then
           1. Perfom EnqueueJob(`"FinalizationJob"`, FinalizationGroupCleanupJob, &laquo; _finalizationGroup_ &raquo;).
+      1. Set _agent_.[[KeptAlive]] to a new empty List.
     </emu-alg>
+    <emu-note type=editor>
+      <p>In HTML, DoAgentFinalization is called between Step 2 and 3 of the <a href="https://html.spec.whatwg.org/#perform-a-microtask-checkpoint">perform a microtask checkpoint</a> algorithm.</p>
+      <p>In the ECMAScript specification, DoAgentFinalization is called as the last step of RunJobs.</p>
+      <p>A particular host environment will, in practice, only invoke DoAgentFinalization from one of these callsites. See <a href="https://github.com/tc39/ecma262/pull/735">tc39/ecma262#735</a> for more information.</p>
+    </emu-note>
   </emu-clause>
 
   <emu-clause id="sec-check-for-empty-cells" aoid="CheckForEmptyCells">
     <h1> CheckForEmptyCells ( _finalizationGroup_ ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
-      1. Assert: _finalizationGroup_ has an [[Cells] internal slot.
+      1. Assert: _finalizationGroup_ has an [[Cells]] internal slot.
       1. For each _cell_ in _finalizationGroup_.[[Cells]], do
-        1. If _cell_.[[Target]] is empty then,
+        1. If _cell_.[[Target]] is ~empty~, then
           1. Return *true*.
       1. Return *false*.
     </emu-alg>
   </emu-clause>
 
   <emu-clause id="sec-finalization-group-cleanup-job" aoid="FinalizationGroupCleanupJob">
-    <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ ) </h1>
+    <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ [ , _callback_ ] ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
-      1. Assert: _finalizationGroup_ has [[Cells] and
+      1. Assert: _finalizationGroup_ has [[Cells]] and
       [[CleanupCallback]] internal slots.
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
-      1. Let _callback_ be _finalizationGroup_.[[CleanupCallback]].
-      1. Perform ? Call(_callback_, undefined, iterator).
+      1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
+      1. Perform ? Call(_callback_, *undefined*, _iterator_).
       1. Return *undefined*.
     </emu-alg>
   </emu-clause>
 
   <emu-clause id="sec-keepduringjob" aoid="KeepDuringJob">
-    <h1> KeepDuringJob </h1>
-    <p>
+    <h1>KeepDuringJob ( _object_ )</h1>
+    <emu-alg>
+      1. Let _agent_ be the surrounding agent.
+      1. Append _object_ to _agent_.[[KeptAlive]].
+    </emu-alg>
+    <emu-note>
       When the abstract operation
       KeepDuringJob is called with a target object reference, it adds the
       target to an identity Set that will point strongly at the target until
@@ -47,6 +118,6 @@
       Set in the current Job that becomes unreachable when the Job ends
       because the Job becomes unreachable, or as a Set in the current Agent
       that gets cleared at the end of each Job.
-    </p>
+    </emu-note>
   </emu-clause>
 </emu-clause>

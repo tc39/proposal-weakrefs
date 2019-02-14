@@ -44,9 +44,11 @@
         1. If NewTarget is *undefined*, throw a *TypeError* exception.
         1. If Type(_cleanupCallback_) is not Callable, throw a *TypeError* exception.
         1. Let _finalizationGroup_ be ? OrdinaryCreateFromConstructor(NewTarget,
-        `"%FinalizationGroupPrototype%"`, &laquo; [[ CleanupCallback, Cells ]] &raquo;).
+        `"%FinalizationGroupPrototype%"`, &laquo; [[CleanupCallback]], [[Cells]] &raquo;).
         1. Set _finalizationGroup_.[[CleanupCallback]] to _cleanupCallback_.
         1. Set _finalizationGroup_.[[Cells]] to be an empty List.
+        1. Let _agent_ be the surrounding agent.
+        1. Append _finalizationGroup_ to _agent_.[[FinalizationGroups]].
         1. Return _finalizationGroup_.
     </emu-clause>
   </emu-clause>
@@ -144,18 +146,19 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
+        1. Let _removed_ be *false*.
         1. For each Record { [[Target]], [[Holdings]],
         [[UnregisterToken]] } _cell_ that is an element of
         _finalizationGroup_.[[Cells]], do
           1. If SameValue(_cell_.[[UnregisterToken]], _unregisterToken_) is *true*, then
             1. Remove _cell_ from _finalizationGroup_.[[Cells]].
-            1. Return *true*.
-        1. Return *false*.
+            1. Set _removed_ to *true*.
+        1. Return _removed_.
       </emu-alg>
     </emu-clause>
 
     <emu-clause id="sec-finalization-group.prototype.cleanupSome">
-      <h1>FinalizationGroup.prototype.cleanupSome ( )</h1>
+      <h1>FinalizationGroup.prototype.cleanupSome ( [ _callback_ ] )</h1>
       <p>The following steps are taken:</p>
       <emu-alg>
         1. Let _finalizationGroup_ be the *this* value.
@@ -163,7 +166,7 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
-        1. Perform ! FinalizationGroupCleanupJob(_finalizationGroup_).
+        1. Perform ! FinalizationGroupCleanupJob(_finalizationGroup_, _callback_).
         1. Return *undefined*.
       </emu-alg>
     </emu-clause>
@@ -227,14 +230,11 @@
             1. If _finalizationGroup_ is *undefined*, then
               1. Return CreateIterResultObject(*undefined*, *true*).
             1. Assert: _finalizationGroup_ has [[Cells]] internal slot.
-            1. For each Record { [[Target]], [[Holdings]],
-            [[UnregisterToken]] } _cell_ that is an element of
-            _finalizationGroup_.[[Cells]], do
-              1. If _cell_.[[Target]] is *empty*, then
-                1. Remove _cell_ from _finalizationGroup_.[[Cells]].
-                1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
-            1. Set _iterator_.[[FinalizationGroup]] to *undefined*.
-            1. Return CreateIterResultObject(undefined, true).
+            1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is ~empty~,
+              1. Choose any such _cell_.
+              1. Remove _cell_ from _finalizationGroup_.[[Cells]].
+              1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
+            1. Otherwise, return CreateIterResultObject((*undefined*, *true*).
           </emu-alg>
      </emu-clause>
 
