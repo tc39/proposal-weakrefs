@@ -22,7 +22,6 @@
 
 * WeakReferences are now Stage 2
 * Till Schneidereit has joined as a co-champion
-* Bradley Meck has a V8 implementation of the old API. He will be updating it to the new API.
 * Till has a prototype of the new API in the SPideRMonkey console
 
 
