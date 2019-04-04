@@ -130,6 +130,9 @@
         1. If Type(_finalizationGroup_) is not Object, throw a *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]] internal slot,
         throw a *TypeError* exception.
+        1. If Type(_unregisterToken_) is not Object,
+          1. If _unregisterToken_ is not *undefined*, through a *TypeError* exception.
+          1. Set _unregisterToken_ to ~empty~.
         1. Let _cell_ be the Record { [[Target]] : _target_, [[Holdings]]:
         _holdings_, [[UnregisterToken]]: _unregisterToken_ }.
         1. Append _cell_ to _finalizationGroup_.[[Cells]].
@@ -146,6 +149,7 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
+        1. If Type(_unregisterToken_) is not Object, through a *TypeError* exception.
         1. Let _removed_ be *false*.
         1. For each Record { [[Target]], [[Holdings]],
         [[UnregisterToken]] } _cell_ that is an element of
