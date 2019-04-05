@@ -102,6 +102,7 @@
       1. Perform ? Call(_callback_, *undefined*, _iterator_).
       1. Return *undefined*.
     </emu-alg>
+    <emu-note type=editor>If calling the callback throws an error, this will be caught within the RunJobs algorithm and reported to the host. HTML does not apply the RunJobs algorithm, but will also report the error.</emu-note>
   </emu-clause>
 
   <emu-clause id="sec-keepduringjob" aoid="KeepDuringJob">
