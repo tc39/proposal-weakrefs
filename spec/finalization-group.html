@@ -131,7 +131,7 @@
         1. If _finalizationGroup_ does not have a [[Cells]] internal slot,
         throw a *TypeError* exception.
         1. If Type(_unregisterToken_) is not Object,
-          1. If _unregisterToken_ is not *undefined*, through a *TypeError* exception.
+          1. If _unregisterToken_ is not *undefined*, throw a *TypeError* exception.
           1. Set _unregisterToken_ to ~empty~.
         1. Let _cell_ be the Record { [[Target]] : _target_, [[Holdings]]:
         _holdings_, [[UnregisterToken]]: _unregisterToken_ }.
