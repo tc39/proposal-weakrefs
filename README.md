@@ -104,16 +104,12 @@ Another use case is running custom clean-up code after Finalization use case: e.
 
 ```js
 class FileStream {
-  static #cleanUp(iterable) {
-    for (const file of iterable) {
-      FileStream.#close(file.fd);
+  static #cleanUp(holdings) {
+    for (const file of holdinds) {
+      file.close(); // cleans up the file descriptor
     }
   }
-
-  static #close(fd) {
-    fs.close(fd, (err) => /* handle error */);
-  }
-
+  
   static #finalizationGroup = new FinalizationGroup(this.#cleanUp);
 
   #token = {};
@@ -127,7 +123,7 @@ class FileStream {
 
   close() {
     FileStream.#finalizationGroup.unregister(this.#token);
-    FileStream.#close(this.#file.fd);
+    File.close(this.#file);
     // other cleanup
   }
 
