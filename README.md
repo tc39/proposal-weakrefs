@@ -220,7 +220,7 @@ class IterableWeakMap {
     this.#weakMap.set(key, { value, ref });
     this.#refMap.set(ref, value);
     this.#finalizationGroup.register(key, {
-      map: this.#weakMap,
+      map: this.#refMap,
       ref
     }, ref);
   }
