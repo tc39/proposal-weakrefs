@@ -3,11 +3,15 @@
   "description": "WeakRef proposal",
   "license": "Fair",
   "scripts": {
-    "spec": "ecmarkup spec/index.html docs/index.html",
-    "watch": "ecmarkup --watch spec/index.html out/index.html"
+    "prebuild": "mkdirp out",
+    "build": "ecmarkup spec/index.html out/index.html"
+  },
+  "dependencies": {
+    "ecmarkup": "^3.14.0",
+    "mkdirp": "^0.5.1"
   },
   "devDependencies": {
-    "ecmarkup": "^3.11.2"
+    "@alrra/travis-scripts": "^3.0.0"
   },
   "version": "1.0.0",
   "repository": {
