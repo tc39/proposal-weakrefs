@@ -146,6 +146,7 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
+        1. If IsCallable(_callback_) is *false*, throw a *TypeError* exception.
         1. Perform ! FinalizationGroupCleanupJob(_finalizationGroup_, _callback_).
         1. Return *undefined*.
       </emu-alg>
