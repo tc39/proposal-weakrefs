@@ -1,0 +1,16 @@
+sudo: off
+
+language: node_js
+
+node_js:
+  - stable
+
+script:
+  - bash ./deploy.sh
+
+env:
+  global:
+    - ENCRYPTION_LABEL: "366b667bb40e"
+    - GH_USER_NAME: "gsathya"
+    - GH_USER_EMAIL: "gsathya.ceg@gmail.com"
+    - PRIVATE_KEY_FILE_NAME: "deploy_key.enc"
