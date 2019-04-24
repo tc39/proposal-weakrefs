@@ -95,12 +95,15 @@
     <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ [ , _callback_ ] ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
-      1. Assert: _finalizationGroup_ has [[Cells]] and
-      [[CleanupCallback]] internal slots.
+      1. Assert: _finalizationGroup_ has [[Cells]],
+      [[CleanupCallback]], and [[IsFinalizationGroupCleanupJobActive]] internal slots.
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
       1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
-      1. Perform ? Call(_callback_, *undefined*, _iterator_).
-      1. Return *undefined*.
+      1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *true*.
+      1. Let _result_ be Call(_callback_, *undefined*, _iterator_).
+      1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
+      1. If _result_ is an abrupt completion, return _result_.
+      1. Else return NormalCompletion(*undefined*).
     </emu-alg>
     <emu-note type=editor>When called from DoAgentFinalization, if calling the callback throws an error, this will be caught within the RunJobs algorithm and reported to the host. HTML does not apply the RunJobs algorithm, but will also <a href="https://html.spec.whatwg.org/#report-the-error">report the error</a>, which may call `window.onerror`.</emu-note>
   </emu-clause>
