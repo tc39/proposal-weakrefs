@@ -1,6 +1,63 @@
 <emu-clause id="sec-abstract-jobs">
   <h1> Abstract Jobs </h1>
 
+  <emu-clause id="sec-weakref-processing-model">
+    <h1>Processing model of WeakRefs and FinalizationGroups</h1>
+
+    <p>
+      This specification does not make any guarantees about garbage collection.
+      Objects which are unreachable from ECMAScript may be released after long periods
+      of time, or never at all. For this reason, this specification uses the term
+      "may" when describing behavior triggered by garbage collection.
+    </p>
+
+    <p>
+      At any given time, if all references to a ECMAScript object are from a
+      [[Target]] field or internal slot, inlcuding the agent's [[KeptAlive]] field,
+      the implementation may replace the reference to the object in all such
+      [[Target]] fields or internal slots with the value ~empty~.
+    </p>
+
+    <p>
+      The semantics of WeakRefs and FinalizationGroups is based on two
+      operations which happen at particular points in time:
+    </p>
+
+    <ul>
+      <li>
+        When WeakRef.prototype.deref is called, the referent (if it's not
+        already dead) is kept alive so that subsequent, synchronous accesses also
+        return the object. This list is reset when synchronous work is done using
+        the ClearKeptObjects abstract operation.
+      </li>
+
+      <li>
+        When an object which is registered with a FinalizationGroup becomes
+        unreachable, a call of the FinalizationGroup's cleanup callback may
+        eventually be made, after synchronous JavaScript execution completes.
+        The FinalizationGroup cleanup is performed with the
+        FinalizationGroupCleanup abstract operation.
+      </li>
+    </ul>
+
+    <p>
+      Neither of these actions (ClearKeptObjects or FinalizationGroupCleanup)
+      may interrupt synchronous ECMAScript execution. Because embedding
+      environments may assemble longer, synchronous ECMAScript execution runs,
+      this specification defers the scheduling of ClearKeptObjects and
+      FinalizationGroupCleanup to the embedding environment.
+    </p>
+
+    <p>
+      Some ECMAScript implementations include garbage collector implementations
+      which run in the background, including when ECMAScript is idle. Letting the
+      embedding environment schedule FinalizationGroupCleanup allows it to resume
+      ECMAScript execution in order to run finalizer work, which may free up holdings,
+      reducing overall memory usage.
+    </p>
+  </emu-clause>
+
+
     <emu-table id="table-agent-record" caption="Agent Record Fields">
       <table>
         <tbody>
@@ -44,63 +101,15 @@
             <td><ins>List of objects</ins></td>
             <td><ins>Initially a new empty List, representing the list of objects to be kept alive until the end of the current Job</ins></td>
           </tr>
-          <tr>
-            <td><ins>[[FinalizationGroups]]</ins></td>
-            <td><ins>List of FinalizationGroup objects</ins></td>
-            <td><ins>Initially a new empty List, representing the set of all FinalizationGroups</ins></td>
-          </tr>
         </tbody>
       </table>
     </emu-table>
 
-  <p>
-    At any given time, if all references to a ECMAScript object are from a
-    [[Target]] field or internal slot, and KeepDuringJob was not called on the
-    object during current RunJobs algorithm/since the last microtask checkpoint,
-    the implementation MAY replace the reference to the object in all such
-    [[Target]] fields or internal slots with the value ~empty~.
-  </p>
-
-  <emu-clause id="sec-do-agent-finalization" aoid="DoAgentFinalization">
-    <h1> DoAgentFinalization ( )</h1>
-    <p> The following steps are performed: </p>
+  <emu-clause id="sec-clear-kept-objects" aoid=ClearKeptObjects>
+    <h1>ClearKeptObjects( _agent_ )</h1>
+    <p>The following steps are performed:</p>
     <emu-alg>
-      1. Let _agent_ be the surrounding agent.
-      1. For each _finalizationGroup_ in _agent_.[[FinalizationGroups]], do
-        1. Let _hasEmptyCell_ be ! CheckForEmptyCells(_finalizationGroup_).
-        1. If _hasEmptyCell_ is *true*, then
-          1. Perfom EnqueueJob(`"FinalizationJob"`, FinalizationGroupCleanupJob, &laquo; _finalizationGroup_ &raquo;).
       1. Set _agent_.[[KeptAlive]] to a new empty List.
-    </emu-alg>
-    <emu-note type=editor>
-      <p>In HTML, DoAgentFinalization is called between Step 2 and 3 of the <a href="https://html.spec.whatwg.org/#perform-a-microtask-checkpoint">perform a microtask checkpoint</a> algorithm.</p>
-      <p>In the ECMAScript specification, DoAgentFinalization is called as the last step of RunJobs.</p>
-      <p>A particular host environment will, in practice, only invoke DoAgentFinalization from one of these callsites. See <a href="https://github.com/tc39/ecma262/pull/735">tc39/ecma262#735</a> for more information.</p>
-    </emu-note>
-  </emu-clause>
-
-  <emu-clause id="sec-check-for-empty-cells" aoid="CheckForEmptyCells">
-    <h1> CheckForEmptyCells ( _finalizationGroup_ ) </h1>
-    <p> The following steps are performed: </p>
-    <emu-alg>
-      1. Assert: _finalizationGroup_ has an [[Cells]] internal slot.
-      1. For each _cell_ in _finalizationGroup_.[[Cells]], do
-        1. If _cell_.[[Target]] is ~empty~, then
-          1. Return *true*.
-      1. Return *false*.
-    </emu-alg>
-  </emu-clause>
-
-  <emu-clause id="sec-finalization-group-cleanup-job" aoid="FinalizationGroupCleanupJob">
-    <h1> FinalizationGroupCleanupJob ( _finalizationGroup_ [ , _callback_ ] ) </h1>
-    <p> The following steps are performed: </p>
-    <emu-alg>
-      1. Assert: _finalizationGroup_ has [[Cells]] and
-      [[CleanupCallback]] internal slots.
-      1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
-      1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
-      1. Perform ? Call(_callback_, *undefined*, _iterator_).
-      1. Return *undefined*.
     </emu-alg>
   </emu-clause>
 
@@ -119,5 +128,30 @@
       because the Job becomes unreachable, or as a Set in the current Agent
       that gets cleared at the end of each Job.
     </emu-note>
+  </emu-clause>
+
+  <emu-clause id="sec-check-for-empty-cells" aoid="CheckForEmptyCells">
+    <h1> CheckForEmptyCells ( _finalizationGroup_ ) </h1>
+    <p> The following steps are performed: </p>
+    <emu-alg>
+      1. Assert: _finalizationGroup_ has an [[Cells]] internal slot.
+      1. For each _cell_ in _finalizationGroup_.[[Cells]], do
+        1. If _cell_.[[Target]] is ~empty~, then
+          1. Return *true*.
+      1. Return *false*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-finalization-group-cleanup" aoid="FinalizationGroupCleanup">
+    <h1> FinalizationGroupCleanup ( _finalizationGroup_ [ , _callback_ ] ) </h1>
+    <p> The following steps are performed: </p>
+    <emu-alg>
+      1. Assert: _finalizationGroup_ has [[Cells]] and [[CleanupCallback]] internal slots.
+      1. If CheckForEmptyCells(_finalizationGroup_) is *false*, return.
+      1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
+      1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
+      1. Perform ? Call(_callback_, *undefined*, _iterator_).
+      1. Return.
+    </emu-alg>
   </emu-clause>
 </emu-clause>
