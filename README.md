@@ -30,7 +30,7 @@ For example, if you have a number of large binary image objects (e.g. represente
 - If you used a `Map` to map names to images, or images to names, the image objects would remain alive just because they appeared as values or keys in the map.
 - `WeakMap`s are not suitable for this purpose either: they are weak over their *keys*, but in this case, we need a structure which is weak over its *values*.
 
-Instead, we can use a `Map` whose values are `WeakRef` objects, which point to the `ArrayBuffer`. This way, we avoid
+Instead, we can use a `Map` whose values are `WeakRef` objects, which point to the `ArrayBuffer`. This way, we avoid holding these `ArrayBuffer` objects in memory longer than they would be otherwise: it's a way to find the image object if it's still around, but if it gets garbage collected, we'll regenerate it. This way, less memory is used in some situations.
 
 ```js
 // This technique is incomplete; see below.
