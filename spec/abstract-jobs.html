@@ -1,63 +1,6 @@
 <emu-clause id="sec-abstract-jobs">
   <h1> Abstract Jobs </h1>
 
-  <emu-clause id="sec-weakref-processing-model">
-    <h1>Processing model of WeakRefs and FinalizationGroups</h1>
-
-    <p>
-      This specification does not make any guarantees about garbage collection.
-      Objects which are unreachable from ECMAScript may be released after long periods
-      of time, or never at all. For this reason, this specification uses the term
-      "may" when describing behavior triggered by garbage collection.
-    </p>
-
-    <p>
-      At any given time, if all references to a ECMAScript object are from a
-      [[Target]] field or internal slot, inlcuding the agent's [[KeptAlive]] field,
-      the implementation may replace the reference to the object in all such
-      [[Target]] fields or internal slots with the value ~empty~.
-    </p>
-
-    <p>
-      The semantics of WeakRefs and FinalizationGroups is based on two
-      operations which happen at particular points in time:
-    </p>
-
-    <ul>
-      <li>
-        When WeakRef.prototype.deref is called, the referent (if it's not
-        already dead) is kept alive so that subsequent, synchronous accesses also
-        return the object. This list is reset when synchronous work is done using
-        the ClearKeptObjects abstract operation.
-      </li>
-
-      <li>
-        When an object which is registered with a FinalizationGroup becomes
-        unreachable, a call of the FinalizationGroup's cleanup callback may
-        eventually be made, after synchronous JavaScript execution completes.
-        The FinalizationGroup cleanup is performed with the
-        FinalizationGroupCleanup abstract operation.
-      </li>
-    </ul>
-
-    <p>
-      Neither of these actions (ClearKeptObjects or FinalizationGroupCleanup)
-      may interrupt synchronous ECMAScript execution. Because embedding
-      environments may assemble longer, synchronous ECMAScript execution runs,
-      this specification defers the scheduling of ClearKeptObjects and
-      FinalizationGroupCleanup to the embedding environment.
-    </p>
-
-    <p>
-      Some ECMAScript implementations include garbage collector implementations
-      which run in the background, including when ECMAScript is idle. Letting the
-      embedding environment schedule FinalizationGroupCleanup allows it to resume
-      ECMAScript execution in order to run finalizer work, which may free up holdings,
-      reducing overall memory usage.
-    </p>
-  </emu-clause>
-
-
     <emu-table id="table-agent-record" caption="Agent Record Fields">
       <table>
         <tbody>
@@ -105,6 +48,117 @@
       </table>
     </emu-table>
 
+  <emu-clause id="sec-weakref-processing-model">
+    <h1>Processing model of WeakRefs and FinalizationGroups</h1>
+
+    <emu-clause id="sec-weakref-invariants">
+      <h1>Objectives</h1>
+
+      <p>
+        This specification does not make any guarantees about garbage collection.
+        Objects which are unreachable from ECMAScript may be released after long periods
+        of time, or never at all. For this reason, this specification uses the term
+        "may" when describing behavior triggered by garbage collection.
+      </p>
+
+      <p>
+        The semantics of WeakRefs and FinalizationGroups is based on two
+        operations which happen at particular points in time:
+      </p>
+
+      <ul>
+        <li>
+          When WeakRef.prototype.deref is called, the referent (if it's not
+          already dead) is kept alive so that subsequent, synchronous accesses also
+          return the object. This list is reset when synchronous work is done using
+          the ClearKeptObjects abstract operation.
+        </li>
+
+        <li>
+          When an object which is registered with a FinalizationGroup becomes
+          unreachable, a call of the FinalizationGroup's cleanup callback may
+          eventually be made, after synchronous JavaScript execution completes.
+          The FinalizationGroup cleanup is performed with the
+          FinalizationGroupCleanup abstract operation.
+        </li>
+      </ul>
+
+      <p>
+        Neither of these actions (ClearKeptObjects or FinalizationGroupCleanup)
+        may interrupt synchronous ECMAScript execution. Because embedding
+        environments may assemble longer, synchronous ECMAScript execution runs,
+        this specification defers the scheduling of ClearKeptObjects and
+        FinalizationGroupCleanup to the embedding environment.
+      </p>
+
+      <p>
+        Some ECMAScript implementations include garbage collector implementations
+        which run in the background, including when ECMAScript is idle. Letting the
+        embedding environment schedule FinalizationGroupCleanup allows it to resume
+        ECMAScript execution in order to run finalizer work, which may free up holdings,
+        reducing overall memory usage.
+      </p>
+    </emu-clause>
+
+    <emu-clause id="sec-weakref-execution">
+      <h1>Execution</h1>
+
+      <p>
+        At any time, an ECMAScript implementation may perform any of the three
+        following actions. They may be triggered interspersed with ECMAScript
+        code execution, or, e.g., from a separate parallel thread.
+      </p>
+
+      <ul>
+        <li>
+          If all references to a ECMAScript object are from a
+          [[Target]] field or internal slot, inlcuding the agent's [[KeptAlive]] field,
+          the implementation may replace the reference to the object in all such
+          [[Target]] fields or internal slots with the value ~empty~.
+        </li>
+
+        <li>
+          When there is an agent _agent_ such that _agent_.[[KeptAlive]]
+          is not empty, the implementation may perform HostClearKeptObjects(_agent_).
+        </li>
+
+        <li>
+          When there is a FinalizationGroup _fg_ such that
+          CheckForEmptyCells(_fg_) is *true*, the implementation may perform
+          HostCleanupFinalizationGroup(_fg_).
+        </li>
+      </ul>
+    </emu-clause>
+
+    <emu-clause id="sec-weakref-host-hooks">
+      <h1>Host Hooks</h1>
+
+      <emu-clause id="sec-host-clear-kept-objects" aoid=HostClearKeptObjects>
+        <h1>HostClearKeptObjects(_agent_)</h1>
+
+        <p>
+          HostClearKeptObjects is an implementation-defined abstract operation
+          that is expected to call ClearKeptObjects(_agent_) at some point in
+          the future, if possible. The host's responsibility is to make this
+          call at a time which does not interrupt synchronous ECMAScript code
+          execution.
+        </p>
+      </emu-clause>
+
+      <emu-clause id="sec-host-cleanup-finalization-group" aoid=HostCleanupFinalizationGroup>
+        <h1>HostCleanupFinalizationGroup(_fg_)</h1>
+
+        <p>
+          HostCleanupFinalizationGroup is an implementation-defined abstract
+          operation that is expected to call CleanupFinalizationGroup(_fg_) at
+          some point in the future, if possible. The host's responsibility is to
+          make this call at a time which does not interrupt synchronous
+          ECMAScript code execution.
+        </p>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+
   <emu-clause id="sec-clear-kept-objects" aoid=ClearKeptObjects>
     <h1>ClearKeptObjects( _agent_ )</h1>
     <p>The following steps are performed:</p>
@@ -142,8 +196,8 @@
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-finalization-group-cleanup" aoid="FinalizationGroupCleanup">
-    <h1> FinalizationGroupCleanup ( _finalizationGroup_ [ , _callback_ ] ) </h1>
+  <emu-clause id="sec-cleanup-finalization-group" aoid="CleanupFinalizationGroup">
+    <h1> CleanupFinalizationGroup ( _finalizationGroup_ [ , _callback_ ] ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
       1. Assert: _finalizationGroup_ has [[Cells]] and [[CleanupCallback]] internal slots.
