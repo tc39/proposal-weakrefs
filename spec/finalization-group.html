@@ -44,7 +44,10 @@
         1. If NewTarget is *undefined*, throw a *TypeError* exception.
         1. If IsCallable(_cleanupCallback_) is *false*, throw a *TypeError* exception.
         1. Let _finalizationGroup_ be ? OrdinaryCreateFromConstructor(NewTarget,
-        `"%FinalizationGroupPrototype%"`, &laquo; [[CleanupCallback]], [[Cells]], [[IsFinalizationGroupCleanupJobActive]] &raquo;).
+        `"%FinalizationGroupPrototype%"`, &laquo; [[Realm]], [[CleanupCallback]], [[Cells]],
+        [[IsFinalizationGroupCleanupJobActive]] &raquo;).
+        1. Let _fn_ be the active function object.
+        1. Set _finalizationGroup_.[[Realm]] to _fn_.[[Realm]].
         1. Set _finalizationGroup_.[[CleanupCallback]] to _cleanupCallback_.
         1. Set _finalizationGroup_.[[Cells]] to be an empty List.
         1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
@@ -184,7 +187,9 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
-        1. Let _iterator_ be ObjectCreate(%FinalizationGroupCleanupIteratorPrototype%, &laquo; [[FinalizationGroup]] &raquo;).
+        1. Assert: realm.[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]] exists and has been initialized.
+        1. Let _prototype_ be _finalizationGroup_.[[Realm]].[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]].
+        1. Let _iterator_ be ObjectCreate(_prototype_, &laquo; [[FinalizationGroup]] &raquo;).
         1. Set _iterator_.[[FinalizationGroup]] to _finalizationGroup_.
         1. Return _iterator_.
       </emu-alg>
