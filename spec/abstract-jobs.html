@@ -118,11 +118,6 @@
         </li>
 
         <li>
-          When there is an agent _agent_ such that _agent_.[[KeptAlive]]
-          is not empty, the implementation may perform HostClearKeptObjects(_agent_).
-        </li>
-
-        <li>
           When there is a FinalizationGroup _fg_ such that
           CheckForEmptyCells(_fg_) is *true*, the implementation may perform
           HostCleanupFinalizationGroup(_fg_).
@@ -132,18 +127,6 @@
 
     <emu-clause id="sec-weakref-host-hooks">
       <h1>Host Hooks</h1>
-
-      <emu-clause id="sec-host-clear-kept-objects" aoid=HostClearKeptObjects>
-        <h1>HostClearKeptObjects(_agent_)</h1>
-
-        <p>
-          HostClearKeptObjects is an implementation-defined abstract operation
-          that is expected to call ClearKeptObjects(_agent_) at some point in
-          the future, if possible. The host's responsibility is to make this
-          call at a time which does not interrupt synchronous ECMAScript code
-          execution.
-        </p>
-      </emu-clause>
 
       <emu-clause id="sec-host-cleanup-finalization-group" aoid=HostCleanupFinalizationGroup>
         <h1>HostCleanupFinalizationGroup(_fg_)</h1>
@@ -160,9 +143,14 @@
   </emu-clause>
 
   <emu-clause id="sec-clear-kept-objects" aoid=ClearKeptObjects>
-    <h1>ClearKeptObjects( _agent_ )</h1>
+    <h1>ClearKeptObjects( )</h1>
+    <p>
+      ECMAScript implementations are expected to call ClearKeptObjects when a
+      synchronous sequence of ECMAScript execution completes.
+    </p>
     <p>The following steps are performed:</p>
     <emu-alg>
+      1. Let _agent_ be the surrounding agent.
       1. Set _agent_.[[KeptAlive]] to a new empty List.
     </emu-alg>
   </emu-clause>
