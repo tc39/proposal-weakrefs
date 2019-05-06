@@ -42,11 +42,15 @@
       </p>
       <emu-alg>
         1. If NewTarget is *undefined*, throw a *TypeError* exception.
-        1. If Type(_cleanupCallback_) is not Callable, throw a *TypeError* exception.
+        1. If IsCallable(_cleanupCallback_) is *false*, throw a *TypeError* exception.
         1. Let _finalizationGroup_ be ? OrdinaryCreateFromConstructor(NewTarget,
-        `"%FinalizationGroupPrototype%"`, &laquo; [[CleanupCallback]], [[Cells]] &raquo;).
+        `"%FinalizationGroupPrototype%"`, &laquo; [[Realm]], [[CleanupCallback]], [[Cells]],
+        [[IsFinalizationGroupCleanupJobActive]] &raquo;).
+        1. Let _fn_ be the active function object.
+        1. Set _finalizationGroup_.[[Realm]] to _fn_.[[Realm]].
         1. Set _finalizationGroup_.[[CleanupCallback]] to _cleanupCallback_.
         1. Set _finalizationGroup_.[[Cells]] to be an empty List.
+        1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
         1. Let _agent_ be the surrounding agent.
         1. Append _finalizationGroup_ to _agent_.[[FinalizationGroups]].
         1. Return _finalizationGroup_.
@@ -74,31 +78,6 @@
         This property has the attributes { [[Writable]]: *false*,
         [[Enumerable]]: *false*, [[Configurable]]: *false* }.
       </p>
-    </emu-clause>
-
-    <emu-clause id="sec-get-finalization-group-@@species">
-      <h1>get FinalizationGroup [ @@species ]</h1>
-
-      <p>
-        `FinalizationGroup[@@species]` is an accessor property whose
-        set accessor function is *undefined*. Its get accessor
-        function performs the following steps:
-      </p>
-
-      <emu-alg>
-        1. Return the *this* value.
-      </emu-alg>
-      <p>
-        The value of the `name` property of this function is `"get [Symbol.species]"`.
-      </p>
-      <emu-note>
-        <p>
-          Methods that create derived collection objects should call
-          @@species to determine the constructor to use to create the
-          derived objects. Subclass constructor may over-ride
-          @@species to change the default constructor assignment.
-        </p>
-      </emu-note>
     </emu-clause>
   </emu-clause>
 
@@ -131,6 +110,9 @@
         1. If Type(_target_) is not Object, throw a *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]] internal slot,
         throw a *TypeError* exception.
+        1. If Type(_unregisterToken_) is not Object,
+          1. If _unregisterToken_ is not *undefined*, throw a *TypeError* exception.
+          1. Set _unregisterToken_ to ~empty~.
         1. Let _cell_ be the Record { [[Target]] : _target_, [[Holdings]]:
         _holdings_, [[UnregisterToken]]: _unregisterToken_ }.
         1. Append _cell_ to _finalizationGroup_.[[Cells]].
@@ -147,6 +129,7 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
+        1. If Type(_unregisterToken_) is not Object, through a *TypeError* exception.
         1. Let _removed_ be *false*.
         1. For each Record { [[Target]], [[Holdings]],
         [[UnregisterToken]] } _cell_ that is an element of
@@ -167,6 +150,7 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
+        1. If IsCallable(_callback_) is *false*, throw a *TypeError* exception.
         1. Perform ! CleanupFinalizationGroup(_finalizationGroup_, _callback_).
         1. Return *undefined*.
       </emu-alg>
@@ -203,7 +187,9 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
-        1. Let _iterator_ be ObjectCreate(%FinalizationGroupCleanupIteratorPrototype%, &laquo; [[FinalizationGroup]] &raquo;).
+        1. Assert: realm.[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]] exists and has been initialized.
+        1. Let _prototype_ be _finalizationGroup_.[[Realm]].[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]].
+        1. Let _iterator_ be ObjectCreate(_prototype_, &laquo; [[FinalizationGroup]] &raquo;).
         1. Set _iterator_.[[FinalizationGroup]] to _finalizationGroup_.
         1. Return _iterator_.
       </emu-alg>
@@ -230,7 +216,9 @@
             1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
             1. If _finalizationGroup_ is *undefined*, then
               1. Return CreateIterResultObject(*undefined*, *true*).
-            1. Assert: _finalizationGroup_ has [[Cells]] internal slot.
+            1. Assert: _finalizationGroup_ has [[Cells]] and [[IsFinalizationGroupCleanupJobActive]] internal slot.
+            1. If _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] is *false*,
+            throw a *TypeError* exception.
             1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is ~empty~,
               1. Choose any such _cell_.
               1. Remove _cell_ from _finalizationGroup_.[[Cells]].
