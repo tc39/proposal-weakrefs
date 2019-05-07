@@ -79,22 +79,22 @@
           unreachable, a call of the FinalizationGroup's cleanup callback may
           eventually be made, after synchronous JavaScript execution completes.
           The FinalizationGroup cleanup is performed with the
-          FinalizationGroupCleanup abstract operation.
+          CleanupFinalizationGroup abstract operation.
         </li>
       </ul>
 
       <p>
-        Neither of these actions (ClearKeptObjects or FinalizationGroupCleanup)
+        Neither of these actions (ClearKeptObjects or CleanupFinalizationGroup)
         may interrupt synchronous ECMAScript execution. Because embedding
         environments may assemble longer, synchronous ECMAScript execution runs,
         this specification defers the scheduling of ClearKeptObjects and
-        FinalizationGroupCleanup to the embedding environment.
+        CleanupFinalizationGroup to the embedding environment.
       </p>
 
       <p>
         Some ECMAScript implementations include garbage collector implementations
         which run in the background, including when ECMAScript is idle. Letting the
-        embedding environment schedule FinalizationGroupCleanup allows it to resume
+        embedding environment schedule CleanupFinalizationGroup allows it to resume
         ECMAScript execution in order to run finalizer work, which may free up holdings,
         reducing overall memory usage.
       </p>
