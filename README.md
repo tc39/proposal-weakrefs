@@ -150,9 +150,11 @@ This code uses an additional feature of finalizers: unregistration. It works lik
 
 Unregistration is useful here to avoid holding a reference to the file past when it was already closed, to avoid closing it multiple times. Imagine--once the file's been closed, the same file descriptor may have been reused for something unrelated, and closing it a second time could mess up unrelated code!
 
-### Avoiding more memory leaks
+### Avoid memory leaks for cross-worker proxies
 
-Finalizers can help prevent memory leaks. [Comlink](https://github.com/GoogleChromeLabs/comlink) wraps a value into a proxy so that any changes to the object are mirrored across (service) workers or iframes. However, there's no way to tell when such an object becomes unreachable and gets garbage-collected in one of the workers/iframes in order to then clean up the corresponding object on the other side, resulting in [memory leaks](https://github.com/GoogleChromeLabs/comlink/issues/63). With the finalization functionality in the WeakRef proposal, objects could send a message to the other side signalling that the object is being cleaned up.
+In a browser with [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers), a programmer can create a system with multiple JavaScript processes, and thus multiple isolated heaps and multiple garbage collectors.  Developers often want to be able to address a "remote" object from some other process, for example to be able to manipulate the DOM from a worker.  A common solution to this problem is to implement a proxy library; two examples are [Comlink](https://github.com/GoogleChromeLabs/comlink) and [via.js](https://github.com/AshleyScirra/via.js).
+
+In a system with proxies and processes, remote proxies need to keep local objects alive, and vice versa.  Usually this is implemented by having each process keep a table mapping remote descriptors to each local object that has been proxied.  However, these entries should be removed from the table when there are no more remote proxies.  With the finalization functionality in the WeakRef proposal, libraries like via.js can [send a message when a proxy becomes collectable](https://github.com/AshleyScirra/via.js#memory-management), to inform the object's process that the object is no longer referenced remotely.  Without finalization, via.js and other remote-proxy systems have to fall back to leaking memory, or to manual resource management.
 
 ## Using `WeakRef`s and `FinalizationGroup`s together
 
