@@ -61,9 +61,56 @@ A few elements of the API are visible in this example:
   - The object passed into the constructor, if it’s still available.
   - `undefined`, if nothing else was pointing to the object and it was already garbage-collected.
 
+### Weak references and the event loop
+
+When you call `deref()` on a weak reference and you get back a value---i.e., not `undefined`---that value is protected from garbage collection for the rest of the turn ([Job](https://tc39.github.io/ecma262/#sec-jobs-and-job-queues)).  Therefore this function will always return true:
+
+```js
+function test(x) {
+  const ref = new WeakRef(x)
+  const y = ref.deref();
+  const z = ref.deref();
+  return y === z;
+}
+```
+
+However this function may return true or false:
+
+```js
+async function test(x) {
+  const ref = new WeakRef(x)
+  const y = ref.deref();
+  await true;
+  const z = ref.deref();
+  return y === z;
+}
+```
+
+This is because `y` and `z` are computed in separate turns.
+
 ## Finalizers
 
-_Finalization_ is the execution of code to clean up after an object that has become unreachable to program execution. User-defined _finalizers_ enable several new use cases, and can help prevent memory leaks.
+_Finalization_ is the execution of code to clean up after an object that
+has become unreachable to program execution. User-defined _finalizers_
+enable several new use cases, and can help prevent memory leaks when
+managing resources that the garbage collector doesn't know about.
+
+### Another note of caution
+
+Finalizers are tricky business and it is best to avoid them.  They can
+be invoked at unexpected times, or not at all---for example, they are not
+invoked when closing a browser tab or on process exit.  They don’t help
+the garbage collector do its job; rather, they are a hindrance.
+Furthermore, they perturb the garbage collector’s internal accounting.
+The GC decides to scan the heap when it thinks that it is necessary,
+after some amount of allocation.  Finalizable objects almost always
+represent an amount of allocation that is invisible to the garbage
+collector.  The effect can be that the actual resource usage of a system
+with finalizable objects is higher than what the GC thinks it should be.
+
+All that said, sometimes finalizers are the right answer to a problem.
+The following examples show a few important problems that would be
+difficult to solve without finalizers.
 
 ### Exposing WebAssembly memory to JavaScript
 
@@ -160,7 +207,7 @@ In a system with proxies and processes, remote proxies need to keep local object
 
 ## Using `WeakRef`s and `FinalizationGroup`s together
 
-It sometimes makes sense to use `WeakRef` and `FinalizationGroup` together. There are several kinds of data structures that want to weakly point to a value, and do some kind of cleanup when that value goes away.
+It sometimes makes sense to use `WeakRef` and `FinalizationGroup` together. There are several kinds of data structures that want to weakly point to a value, and do some kind of cleanup when that value goes away.  Note however that weak refs are cleared when their object is collected, but their associated `FinalizationGroup` cleanup handler only runs in a later microtask; programming idioms that use weak refs and finalizers on the same object need to mind the gap.
 
 ### Weak caches
 
@@ -199,7 +246,7 @@ var getImageCached = makeWeakCached(getImage);
 This example illustrates two important considerations about finalizers:
 
  1. Finalizers introduce concurrency between the "main" program and the cleanup callbacks.  The weak cache cleanup function has to check if the "main" program re-added an entry to the map between the time that a cached value was collected and the time the cleanup function runs, to avoid deleting live entries.  Likewise when looking up a key in the ref map, it's possible that the value has been collected but the cleanup callback hasn't run yet.
- 2. Given that finalizers can behave in surprising ways, they are best deployed behind careful abstractions that prevent misuse, like and `makeWeakCached` above.  A profusion of `FinalizationGroup` uses spread throughout a code-base is a code smell.
+ 2. Given that finalizers can behave in surprising ways, they are best deployed behind careful abstractions that prevent misuse, like `makeWeakCached` above.  A profusion of `FinalizationGroup` uses spread throughout a code-base is a code smell.
 
 ### Iterable WeakMaps
 
@@ -313,7 +360,23 @@ for (const key of map.keys()) {
 // key: {"b":2}
 ```
 
-Remember to be cautious with use of powerful constructs like this iterable WeakMap. Web APIs designed with semantics analogous to these are widely considered to be legacy mistakes. It’s best to avoid exposing garbage collection timing in your applications, and to use weak references and finalizers sparingly, e.g., for cases which help reduce memory usage.
+Remember to be cautious with use of powerful constructs like this iterable WeakMap. Web APIs designed with semantics analogous to these are widely considered to be legacy mistakes. It’s best to avoid exposing garbage collection timing in your applications, and to use weak references and finalizers only where a problem cannot be reasonably solved in other ways.
+
+### Finalizers, visibility, and turns: final notes of caution
+
+As mentioned above, finalizers run after an object is collected, in a separate microtask.  An object can be collected at any point where it is no longer needed to compute the result of a computation.  JavaScript implementations have a wide latitude to determine what this means in practice.  For example, consider this async function:
+
+```js
+async function process(x) {
+  const p = x.getPtr();
+  await true;
+  return handle(p);
+}
+```
+
+If `x` has a finalizer that invalidates the value returned by `getPtr()`, an implementation is free to collect `x` at any point after the `getPtr()` call, and to finalize it during the `await true`, making the `handle(p)` call operate on an invalid pointer.  From a language perspective, the fact that `x` was an argument to a function does not prevent it from being collected.  Additionally the `return handle(p)` call is a tail call, which an engine may implement as throwing away any stack frame with the `x` binding, which is another opportunity for `x` to become collectible.
+
+In practice, the fact that finalizers are delayed until a future microtask will prevent most early-finalization bugs.  However, developers writing libraries that use `FinalizationGroup` should be wary of the interactions of async functions with finalizers, and avoid exposing invalidatable internals of finalizable objects.
 
 ## Historical documents
 
