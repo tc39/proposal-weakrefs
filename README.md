@@ -265,14 +265,15 @@ class IterableWeakMap {
   }
 
   *keys() {
-    for (const [ref] of this.#refMap) {
-      const key = ref.deref();
-      if (key) yield key;
+    for (const [key, value] of this) {
+      yield key;
     }
   }
 
-  values() {
-    return this.#refMap.values();
+  *values() {
+    for (const [key, value] of this) {
+      yield value;
+    }
   }
 }
 
