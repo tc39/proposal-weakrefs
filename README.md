@@ -34,20 +34,22 @@ Instead, we can use a `Map` whose values are `WeakRef` objects, which point to t
 
 ```js
 // This technique is incomplete; see below.
-const cache = new Map();
-function getImageCached(name) {
-  let ref = cache.get(name);
-  if (ref !== undefined) {
-    const deref = ref.deref();
-    if (deref !== undefined) {
-      return deref;
+function makeWeakCached(f) {
+  const cache = new Map();
+  return key => {
+    const ref = cache.get(key);
+    if (ref) {
+      const cached = ref.deref();
+      if (cached !== undefined) return cached;
     }
-  }
-  const image = getImage(name);
-  ref = new WeakRef(image);
-  cache.set(name, ref);
-  return image;
+
+    const fresh = f(key);
+    cache.set(key, new WeakRef(fresh));
+    return fresh;
+  };
 }
+
+var getImageCached = makeWeakCached(getImage);
 ```
 
 This technique can help avoid spending a lot of memory on `ArrayBuffer`s that nobody is looking at anymore, but it still has the problem that, over time, the `Map` will fill up with strings which point to a `WeakRef` whose referent has already been collected. One way to address this is to periodically scavenge the cache and clear out dead entries. Another way is with finalizers, which we’ll come back to at the end of the article.
@@ -158,61 +160,44 @@ Finalizers can help prevent memory leaks. [Comlink](https://github.com/GoogleChr
 
 It sometimes makes sense to use `WeakRef` and `FinalizationGroup` together. There are several kinds of data structures that want to weakly point to a value, and do some kind of cleanup when that value goes away.
 
-### Weak-value maps (caches)
+### Weak caches
 
-In the initial example from this README, a cache was implemented as a `Map` whose values were wrapped in `WeakRef` instances.  This allowed the values to be collected, but leaked memory in the form of the entries in the map.  A better solution is to implement a `WeakCache`---like a `WeakMap`, but whose values are weak instead of the keys.
-
-```js
-class WeakCache {
-  #cache = new Map();
-  #cleanup;
-
-  constructor() {
-    this.#cleanup = new FinalizationGroup(iterator => {
-      for (const key of iterator) {
-        // Q: Why not just this.#cache.delete(key) unconditionally?
-        // A: See note below.
-        const ref = this.#cache.get(key);
-        if (ref && !ref.deref()) this.#cache.delete(key);
-      }
-    });
-  }
-
-  add(key, value) {
-    this.#cache.set(key, new WeakRef(value));
-    this.#cleanup.register(value, key, key);
-    return value;
-  }
-
-  get(key) {
-    const ref = this.#cache.get(key);
-    return ref && ref.deref();
-  }
-}
-```
-
-Our `getImageCached` function can then be simplified and made more robust at the same time:
+In the initial example from this README, `makeWeakCached` used a `Map` whose values were wrapped in `WeakRef` instances.  This allowed the cached values to be collected, but leaked memory in the form of the entries in the map.  A more complete version of `makeWeakCached` uses finalizers to fix this memory leak.
 
 ```js
-function makeCached(f) {
-  const cache = new WeakCache;
-  return key => {
-    let val = cache.get(key);
-    if (!val) {
-      val = f(val);
-      cache.set(key, val);
+// Fixed version that doesn't leak memory.
+function makeWeakCached(f) {
+  const cache = new Map();
+  const cleanup = new FinalizationGroup(iterator => {
+    for (const key of iterator) {
+      // See note below on concurrency considerations.
+      const ref = cache.get(key);
+      if (ref && !ref.deref()) cache.delete(key);
     }
-    return val;
+  });
+
+  return key => {
+    const ref = cache.get(key);
+    if (ref) {
+      const cached = ref.deref();
+      // See note below on concurrency considerations.
+      if (cached !== undefined) return cached;
+    }
+
+    const fresh = f(key);
+    cache.set(key, new WeakRef(fresh));
+    cleanup.register(fresh, key, key);
+    return fresh;
   };
 }
 
-var getImageCached = makeCached(getImage);
+var getImageCached = makeWeakCached(getImage);
 ```
 
 This example illustrates two important considerations about finalizers:
 
- 1. Finalizers introduce concurrency between the "main" program and the cleanup callbacks.  The `WeakCache` cleanup function had to check if the "main" program re-added an entry to the map between the time that a cached value was collected and the time the cleanup function runs, to avoid deleting live entries.
- 2. Finalizers are best deployed behind abstractions that prevent misuse, like `WeakCache` and `makeCached` above.  A profusion of `FinalizationGroup` uses spread throughout a code-base is a code smell.
+ 1. Finalizers introduce concurrency between the "main" program and the cleanup callbacks.  The weak cache cleanup function has to check if the "main" program re-added an entry to the map between the time that a cached value was collected and the time the cleanup function runs, to avoid deleting live entries.  Likewise when looking up a key in the ref map, it's possible that the value has been collected but the cleanup callback hasn't run yet.
+ 2. Given finalizers can behave in surprising ways, they are best deployed behind careful abstractions that prevent misuse, like and `makeWeakCached` above.  A profusion of `FinalizationGroup` uses spread throughout a code-base is a code smell.
 
 ### Iterable WeakMaps
 
