@@ -80,7 +80,7 @@ However this function may return true or false:
 async function test(x) {
   const ref = new WeakRef(x)
   const y = ref.deref();
-  await true;
+  await new Promise(resolve => setTimeout(resolve));
   const z = ref.deref();
   return y === z;
 }
@@ -355,12 +355,12 @@ As mentioned above, finalizers run after an object is collected, in a separate m
 ```js
 async function process(x) {
   const p = x.getPtr();
-  await true;
+  await new Promise(resolve => setTimeout(resolve));
   return handle(p);
 }
 ```
 
-If `x` has a finalizer that invalidates the value returned by `getPtr()`, an implementation is free to collect `x` at any point after the `getPtr()` call, and to finalize it during the `await true`, making the `handle(p)` call operate on an invalid pointer.  From a language perspective, the fact that `x` was an argument to a function does not prevent it from being collected.  Additionally the `return handle(p)` call is a tail call, which an engine may implement as throwing away any stack frame with the `x` binding, which is another opportunity for `x` to become collectible.
+If `x` has a finalizer that invalidates the value returned by `getPtr()`, an implementation is free to collect `x` at any point after the `getPtr()` call, and to finalize it during the `await`, making the `handle(p)` call operate on an invalid pointer.  From a language perspective, the fact that `x` was an argument to a function does not prevent it from being collected.  Additionally the `return handle(p)` call is a tail call, which an engine may implement as throwing away any stack frame with the `x` binding, which is another opportunity for `x` to become collectible.
 
 In practice, the fact that finalizers are delayed until a future microtask will prevent most early-finalization bugs.  However, developers writing libraries that use `FinalizationGroup` should be wary of the interactions of async functions with finalizers, and avoid exposing invalidatable internals of finalizable objects.
 
