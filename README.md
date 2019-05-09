@@ -197,7 +197,7 @@ var getImageCached = makeWeakCached(getImage);
 This example illustrates two important considerations about finalizers:
 
  1. Finalizers introduce concurrency between the "main" program and the cleanup callbacks.  The weak cache cleanup function has to check if the "main" program re-added an entry to the map between the time that a cached value was collected and the time the cleanup function runs, to avoid deleting live entries.  Likewise when looking up a key in the ref map, it's possible that the value has been collected but the cleanup callback hasn't run yet.
- 2. Given finalizers can behave in surprising ways, they are best deployed behind careful abstractions that prevent misuse, like and `makeWeakCached` above.  A profusion of `FinalizationGroup` uses spread throughout a code-base is a code smell.
+ 2. Given that finalizers can behave in surprising ways, they are best deployed behind careful abstractions that prevent misuse, like and `makeWeakCached` above.  A profusion of `FinalizationGroup` uses spread throughout a code-base is a code smell.
 
 ### Iterable WeakMaps
 
