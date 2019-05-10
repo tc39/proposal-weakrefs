@@ -61,33 +61,6 @@ A few elements of the API are visible in this example:
   - The object passed into the constructor, if it’s still available.
   - `undefined`, if nothing else was pointing to the object and it was already garbage-collected.
 
-### Weak references and the event loop
-
-When you call `deref()` on a weak reference and you get back a value---i.e., not `undefined`---that value is protected from garbage collection for the rest of the turn ([Job](https://tc39.github.io/ecma262/#sec-jobs-and-job-queues)).  Therefore this function will always return true:
-
-```js
-function test(x) {
-  const ref = new WeakRef(x)
-  const y = ref.deref();
-  const z = ref.deref();
-  return y === z;
-}
-```
-
-However this function may return true or false:
-
-```js
-async function test(x) {
-  const ref = new WeakRef(x)
-  const y = ref.deref();
-  await new Promise(resolve => setTimeout(resolve));
-  const z = ref.deref();
-  return y === z;
-}
-```
-
-This is because `y` and `z` are computed in separate turns.
-
 ## Finalizers
 
 _Finalization_ is the execution of code to clean up after an object that has become unreachable to program execution. User-defined _finalizers_ enable several new use cases, and can help prevent memory leaks when managing resources that the garbage collector doesn't know about.
