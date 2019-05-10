@@ -327,13 +327,13 @@ As mentioned above, finalizers run after an object is collected, in a separate m
 
 ```js
 async function process(x) {
-  const p = x.getPtr();
+  const p = x.p;
   await new Promise(resolve => setTimeout(resolve));
   return handle(p);
 }
 ```
 
-If `x` has a finalizer that invalidates the value returned by `getPtr()`, an implementation is free to collect `x` at any point after the `getPtr()` call, and to finalize it during the `await`, making the `handle(p)` call operate on an invalid pointer.  From a language perspective, the fact that `x` was an argument to a function does not prevent it from being collected.  Additionally the `return handle(p)` call is a tail call, which an engine may implement as throwing away any stack frame with the `x` binding, which is another opportunity for `x` to become collectible.
+Let's assume that `x.p` is a pointer to WebAssembly memory associated with `x`, and that `x` has a finalizer that frees the associated memory.  An implementation is free to collect `x` at any point after the `x.p` property reference, and to finalize it during the `await`, making the `handle(p)` call operate on a pointer to freed memory.  From a language perspective, the fact that `x` was an argument to a function does not prevent it from being collected.  Additionally the `return handle(p)` call is a tail call, which an engine may implement as throwing away any stack frame with the `x` binding, which is another opportunity for `x` to become collectible.
 
 In practice, the fact that finalizers are delayed until a future microtask will prevent most early-finalization bugs.  However, developers writing libraries that use `FinalizationGroup` should be wary of the interactions of async functions with finalizers, and avoid exposing invalidatable internals of finalizable objects.
 
