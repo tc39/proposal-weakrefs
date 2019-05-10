@@ -193,7 +193,7 @@ In a system with proxies and processes, remote proxies need to keep local object
 
 ## Using `WeakRef`s and `FinalizationGroup`s together
 
-It sometimes makes sense to use `WeakRef` and `FinalizationGroup` together. There are several kinds of data structures that want to weakly point to a value, and do some kind of cleanup when that value goes away.  Note however that weak refs are cleared when their object is collected, but their associated `FinalizationGroup` cleanup handler only runs in a later microtask; programming idioms that use weak refs and finalizers on the same object need to mind the gap.
+It sometimes makes sense to use `WeakRef` and `FinalizationGroup` together. There are several kinds of data structures that want to weakly point to a value, and do some kind of cleanup when that value goes away.  Note however that weak refs are cleared when their object is collected, but their associated `FinalizationGroup` cleanup handler only runs in a later task; programming idioms that use weak refs and finalizers on the same object need to mind the gap.
 
 ### Weak caches
 
@@ -362,7 +362,7 @@ async function process(x) {
 
 Let's assume that `x.p` is a pointer to WebAssembly memory associated with `x`, and that `x` has a finalizer that frees the associated memory.  An implementation is free to collect `x` at any point after the `x.p` property reference, and to finalize it during the `await`, making the `handle(p)` call operate on a pointer to freed memory.  From a language perspective, the fact that `x` was an argument to a function does not prevent it from being collected.  Additionally the `return handle(p)` call is a tail call, which an engine may implement as throwing away any stack frame with the `x` binding, which is another opportunity for `x` to become collectible.
 
-In practice, the fact that finalizers are delayed until a future microtask will prevent most early-finalization bugs.  However, developers writing libraries that use `FinalizationGroup` should be wary of the interactions of async functions with finalizers, and avoid exposing invalidatable internals of finalizable objects.
+In practice, the fact that finalizers are delayed until a future task will prevent most early-finalization bugs.  However, developers writing libraries that use `FinalizationGroup` should be wary of the interactions of async functions with finalizers, and avoid exposing invalidatable internals of finalizable objects.
 
 ## Historical documents
 
