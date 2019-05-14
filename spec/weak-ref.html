@@ -136,4 +136,19 @@
       internal slot.
     </p>
   </emu-clause>
+
+  <emu-clause id="sec-collection-modifications">
+    <h1>Modifications to collection type definitions</h1>
+    <p>WeakMap and WeakSet keys are not kept alive just because a WeakRef points to them.</p>
+
+    <emu-clause id="sec-weakmap">
+      <h1>WeakMap Objects</h1>
+      <p>WeakMap objects are collections of key/value pairs where the keys are objects and values may be arbitrary ECMAScript language values. A WeakMap may be queried to see if it contains a key/value pair with a specific key, but no mechanism is provided for enumerating the objects it holds as keys. If an object that is being used as the key of a WeakMap key/value pair is only reachable by following a chain of references that start within that WeakMap, <ins>or if all references to a ECMAScript object are from a [[Target]] field or internal slot,</ins> then that key/value pair is inaccessible and is automatically removed from the WeakMap. WeakMap implementations must detect and remove such key/value pairs and any associated resources.</p>
+    </emu-clause>
+
+    <emu-clause id="sec-weakset">
+      <h1>WeakMap Objects</h1>
+      <p>WeakSet objects are collections of objects. A distinct object may only occur once as an element of a WeakSet's collection. A WeakSet may be queried to see if it contains a specific object, but no mechanism is provided for enumerating the objects it holds. If an object that is contained by a WeakSet is only reachable by following a chain of references that start within that WeakSet, <ins>or if all references to a ECMAScript object are from a [[Target]] field or internal slot,</ins> then that object is inaccessible and is automatically removed from the WeakSet. WeakSet implementations must detect and remove such objects and any associated resources.</p>
+    </emu-clause>
+  </emu-clause>
 </emu-clause>
