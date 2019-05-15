@@ -263,7 +263,7 @@ class IterableWeakMap {
     for (const ref of this.#refSet) {
       const key = ref.deref();
       if (!key) continue;
-      const { value } = this.#refMap.get(key);
+      const { value } = this.#weakMap.get(key);
       yield [key, value];
     }
   }
