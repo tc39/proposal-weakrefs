@@ -339,6 +339,21 @@ Let's assume that `x.p` is a pointer to WebAssembly memory associated with `x`, 
 
 In practice, the fact that finalizers are delayed until a future task will prevent most early-finalization bugs.  However, developers writing libraries that use `FinalizationGroup` should be wary of the interactions of async functions with finalizers, and avoid exposing invalidatable internals of finalizable objects.
 
+### Limitations with some reference cycles
+
+WeakRef and Finalizers do not solve on their own all memory leak problems.
+
+For example, it is not possible to re-create a `WeakMap` simply by using a `Map` with `WeakRef` objects as keys: if the value in such a map references its key, the entry cannot be collected. A real `WeakMap` implementation uses [ephemerons](http://www.jucs.org/jucs_14_21/eliminating_cycles_in_weak/jucs_14_21_3481_3497_barros.pdf) to allow the garbage collector to handle such cycles.\
+This is the reason the [`IterableWeakMap` example](#iterable-weakmaps) keeps the value in a `WeakMap` and only puts the `WeakRef` in a `Set` for iterations. If the value had instead been added to a `Map` such as `this.#refMap.set(ref, value)`, then the following would have leaked:
+```js
+let key = { foo: 'bar' };
+const map = new IterableWeakMap(key, { data: 123, key });
+```
+
+When isolated heaps and multiple garbage collectors are involved such as in the [cross-worker proxies example](#avoid-memory-leaks-for-cross-worker-proxies), reference cycles across them also cannot be collected.\
+If in each worker the local object holds a reference to a proxy for the remote object, then the remote descriptor for the local object prevents the collection of the proxy for the remote object. None of the objects can be collected automatically when code outside the proxy library no longer references them.\
+To avoid leaking, cycles across isolated heaps must be explicitly broken.
+
 ## Historical documents
 
 - [OLD Explanation](https://github.com/tc39/proposal-weakrefs/blob/master/history/weakrefs.md) of a previous version of the proposal
