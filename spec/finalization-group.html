@@ -1,8 +1,8 @@
 <emu-clause id="sec-finalization-group-objects">
   <h1> FinalizationGroup Objects </h1>
   <p>
-    A FinalizationGroup is an object that manages registeration and
-    unregisteration of cleanup operations that are performed when
+    A FinalizationGroup is an object that manages registration and
+    unregistration of cleanup operations that are performed when
     target objects are garbage collected.
   </p>
 
@@ -51,8 +51,8 @@
         1. Set _finalizationGroup_.[[CleanupCallback]] to _cleanupCallback_.
         1. Set _finalizationGroup_.[[Cells]] to be an empty List.
         1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
-        1. Let _agent_ be the surrounding agent.
-        1. Append _finalizationGroup_ to _agent_.[[FinalizationGroups]].
+        1. Let _AR_ be the Agent Record of the surrounding agent.
+        1. Append _finalizationGroup_ to _AR_.[[FinalizationGroups]].
         1. Return _finalizationGroup_.
     </emu-clause>
   </emu-clause>
