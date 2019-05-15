@@ -216,12 +216,12 @@ Such “iterable WeakMaps” are already used in existing DOM APIs such as `docu
 ```js
 class IterableWeakMap {
   #weakMap = new WeakMap();
-  #refMap = new Map();
+  #refSet = new Set();
   #finalizationGroup = new FinalizationGroup(IterableWeakMap.#cleanup);
 
   static #cleanup(iterator) {
-    for (const { map, ref } of iterator) {
-      map.delete(ref);
+    for (const { set, ref } of iterator) {
+      set.delete(ref);
     }
   }
 
@@ -235,9 +235,9 @@ class IterableWeakMap {
     const ref = new WeakRef(key);
 
     this.#weakMap.set(key, { value, ref });
-    this.#refMap.set(ref, value);
+    this.#refSet.add(ref);
     this.#finalizationGroup.register(key, {
-      map: this.#refMap,
+      set: this.#refSet,
       ref
     }, ref);
   }
@@ -254,15 +254,17 @@ class IterableWeakMap {
     }
 
     this.#weakMap.delete(key);
-    this.#refMap.delete(entry.ref);
+    this.#refSet.delete(entry.ref);
     this.#finalizationGroup.unregister(entry.ref);
     return true;
   }
 
   *[Symbol.iterator]() {
-    for (const [ref, value] of this.#refMap) {
+    for (const ref of this.#refSet) {
       const key = ref.deref();
-      if (key) yield [key, value];
+      if (!key) continue;
+      const { value } = this.#refMap.get(key);
+      yield [key, value];
     }
   }
 
