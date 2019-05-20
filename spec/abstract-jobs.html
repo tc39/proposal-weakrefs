@@ -199,6 +199,6 @@
       1. If _result_ is an abrupt completion, return _result_.
       1. Else return NormalCompletion(*undefined*).
     </emu-alg>
-    <emu-note type=editor>When called from DoAgentFinalization, if calling the callback throws an error, this will be caught within the RunJobs algorithm and reported to the host. HTML does not apply the RunJobs algorithm, but will also <a href="https://html.spec.whatwg.org/#report-the-error">report the error</a>, which may call `window.onerror`.</emu-note>
+    <emu-note type=editor>When called from HostCleanupFinalizationGroup, if calling the callback throws an error, this will be caught within the RunJobs algorithm and reported to the host. HTML does not apply the RunJobs algorithm, but will also <a href="https://html.spec.whatwg.org/#report-the-error">report the error</a>, which may call `window.onerror`.</emu-note>
   </emu-clause>
 </emu-clause>
