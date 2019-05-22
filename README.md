@@ -11,12 +11,17 @@ These interfaces can be used independently or together, depending on the use cas
 
 ## A note of caution
 
+This proposal contains two advanced features, `WeakRefs` and `FinalizationGroups`. Their correct use takes careful thought, and they are best avoided if possible.
+
 [Garbage collectors](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)) are complicated. If an application or library depends on GC cleaning up a WeakRef or calling a finalizer in a timely, predictable manner, it's likely to be disappointed: the cleanup may happen much later than expected, or not at all. Sources of variability include:
 - One object might be garbage-collected much sooner than another object, even if they become unreachable at the same time, e.g., due to generational collection.
 - Garbage collection work can be split up over time using incremental and concurrent techniques.
 - Various runtime heuristics can be used to balance memory usage, responsiveness.
 - The JavaScript engine may hold references to things which look like they are unreachable (e.g., in closures, or inline caches).
 - Different JavaScript engines may do these things differently, or the same engine may change its algorithms across versions.
+- Complex factors may lead to objects being held alive for unexpected amounts of time, such as use with certain APIs.
+
+If important logic is placed in the code path of a finalizer, it can transform memory management bugs into user-facing bugs. For example, if data is saved persistently from a finalizer, then a bug which accidentally keeps an additional reference around could lead to data loss.
 
 For this reason, the [W3C TAG Design Principles](https://w3ctag.github.io/design-principles/#js-gc) recommend against creating APIs that expose garbage collection. It's best if `WeakRef`s and `FinalizationGroup`s are used as a way to avoid excess memory usage, or as a backstop against certain bugs, rather than as a normal way to clean up external resources or observe what's allocated.
 
@@ -71,9 +76,66 @@ Finalizers are tricky business and it is best to avoid them.  They can be invoke
 
 All that said, sometimes finalizers are the right answer to a problem.  The following examples show a few important problems that would be difficult to solve without finalizers.
 
+### Locating and responding to external resource leaks
+
+Finalizers can locate external resource leaks. For example, if an open file is garbage collected, the underlying operating system resource could be leaked. Although the OS will likely free the resources when the process exits, this sort of leak could make long-running processes eventually exhaust the number of file handles available. To catch these bugs, a `FinalizationGroup` can be used to log the existence of file objects which are garbage collected before being closed.
+
+The `FinalizationGroup` class represents a group of objects registered with a common finalizer callback. This construct can be used to return the linear memory allocation to the free list when the related JavaScript object is garbage-collected.
+
+```js
+class FileStream {
+  static #cleanUp(holdings) {
+    for (const file of holdings) {
+      console.error(`File leaked: ${file}!`);
+    }
+  }
+  
+  static #finalizationGroup = new FinalizationGroup(this.#cleanUp);
+
+  #token = {};
+  #file;
+
+  constructor(fileName) {
+    this.#file = new File(fileName);
+    FileStream.#finalizationGroup.register(this, this.#file, this.#token);
+    // eagerly trigger async read of file contents into this.data
+  }
+
+  close() {
+    FileStream.#finalizationGroup.unregister(this.#token);
+    File.close(this.#file);
+    // other cleanup
+  }
+
+  async *[Symbol.iterator]() {
+    // read data from this.#file
+  }
+}
+
+const fs = new FileStream('path/to/some/file');
+
+for await (const data of fs) {
+  // do something
+}
+fs.close();
+```
+
+Note, it's not a good idea to close files automatically through a finalizer, as this technique is unreliable and may lead to resource exhaustion. Instead, explicit release of resources (e.g., though `try`/`finally`) is recommended. For this reason, this example logs errors rather than transparently closing the file.
+
+This example shows usage of the whole `FinalizationGroup` API:
+- An object can have a finalizer referenced by calling the `register` method of `FinalizationGroup`. In this case, three arguments are passed to the `register` method:
+  - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
+  - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. Here, the holdings are the underlying `File` object.
+  - An unregistration token, which is used again when the finalizer is indicated to no longer be needed, in the `unregister` method`.
+- The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
+
+The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate "holdings" value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
+
+In the above code sample, the `fs` object will be unregistered as part of the `close` method, which will mean that the finalizer will not be called, and there will be no error log statement. Unregistration can be useful to avoid other sorts of "double free" scenarios.
+
 ### Exposing WebAssembly memory to JavaScript
 
-For example, whenever you have a JavaScript object that is backed by something in WebAssembly, you might want to run custom cleanup code (in WebAssembly or JavaScript) when the object goes away. A [previous proposal](https://github.com/lars-t-hansen/moz-sandbox/blob/master/refmap/ReferenceMap.md) exposed a collection of weak references, with the idea that finalization actions could be taken by periodically checking if they are still alive. This proposal includes a first-class concept of finalizers in order to give developers a way to avoid that repeated scanning.
+Whenever you have a JavaScript object that is backed by something in WebAssembly, you might want to run custom cleanup code (in WebAssembly or JavaScript) when the object goes away. A [previous proposal](https://github.com/lars-t-hansen/moz-sandbox/blob/master/refmap/ReferenceMap.md) exposed a collection of weak references, with the idea that finalization actions could be taken by periodically checking if they are still alive. This proposal includes a first-class concept of finalizers in order to give developers a way to avoid that repeated scanning.
 
 For example, imagine if you have a big `WebAssembly.Memory` object, and you want to create an allocator to give fixed-size portions of it to JavaScript. In some cases, it may be practical to explicitly free this memory, but typically, JavaScript code passes around references freely, without thinking about ownership. So it's helpful to be able to rely on the garbage collector to release this memory.
 
@@ -102,67 +164,15 @@ This code uses a few features of the `FinalizationGroup` API:
   - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. In this case, the holdings are an integer corresponding to the offset within the `WebAssembly.Memory` object.
 - The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
 
-The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate "holdings" value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
-
 The `FinalizationGroup` callback is passed an iterator of holdings to give that callback control over how much work it wants to process. The callback may pull in only part of the iterator, and in this case, the rest of the work would be "saved for later". The callback is not called during execution of other JavaScript code, but rather "in between turns"; it is currently proposed to be restricted to run after all of of the `Promise`-related work is done, right before turning control over to the event loop.
-
-### Releasing external resources as a backstop
-
-Another use case is running custom clean-up code after Finalization use case: e.g. file handle: run some code once a file is no longer in use, in case nothing points to it anymore. Note, it’s still encouraged to use an explicit method call to clean up the resource; this is just a backup.
-
-```js
-class FileStream {
-  static #cleanUp(holdings) {
-    for (const file of holdinds) {
-      file.close(); // cleans up the file descriptor
-    }
-  }
-  
-  static #finalizationGroup = new FinalizationGroup(this.#cleanUp);
-
-  #token = {};
-  #file;
-
-  constructor(fileName) {
-    this.#file = new File(fileName);
-    FileStream.#finalizationGroup.register(this, this.#file, this.#token);
-    // eagerly trigger async read of file contents into this.data
-  }
-
-  close() {
-    FileStream.#finalizationGroup.unregister(this.#token);
-    File.close(this.#file);
-    // other cleanup
-  }
-
-  *[Symbol.iterator]() {
-    // read data from this.#data or this.#file
-  }
-}
-
-const fs = new FileStream('path/to/some/file');
-
-for (const data of fs) {
-  // do something
-}
-fs.close();
-```
-
-Note, it’s not a good idea to *depend* on the `FinalizationGroup` ever calling the cleanup action, as this is inherently unreliable, as described at the beginning of this README. However, it can be a reasonable fallback to handle the case where a resource was dropped on the floor due to a bug. If nothing references the file anymore, no one is going to close it! Just try not to rely on it.
-
-This code uses an additional feature of finalizers: unregistration. It works like this:
-
-- When registering the `FileStream` instance with the finalization group, a third argument is passed: the unregistration token.
-- The `FinalizationGroup.prototype.unregister` method is passed the unregistration token.
-- Afterwards, the cleanup callback is never called with the holdings of this `FileStream`.
-
-Unregistration is useful here to avoid holding a reference to the file past when it was already closed, to avoid closing it multiple times. Imagine--once the file's been closed, the same file descriptor may have been reused for something unrelated, and closing it a second time could mess up unrelated code!
 
 ### Avoid memory leaks for cross-worker proxies
 
 In a browser with [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers), a programmer can create a system with multiple JavaScript processes, and thus multiple isolated heaps and multiple garbage collectors.  Developers often want to be able to address a "remote" object from some other process, for example to be able to manipulate the DOM from a worker.  A common solution to this problem is to implement a proxy library; two examples are [Comlink](https://github.com/GoogleChromeLabs/comlink) and [via.js](https://github.com/AshleyScirra/via.js).
 
 In a system with proxies and processes, remote proxies need to keep local objects alive, and vice versa.  Usually this is implemented by having each process keep a table mapping remote descriptors to each local object that has been proxied.  However, these entries should be removed from the table when there are no more remote proxies.  With the finalization functionality in the WeakRef proposal, libraries like via.js can [send a message when a proxy becomes collectable](https://github.com/AshleyScirra/via.js#memory-management), to inform the object's process that the object is no longer referenced remotely.  Without finalization, via.js and other remote-proxy systems have to fall back to leaking memory, or to manual resource management.
+
+Note: This kind of setup cannot collect cycles across workers. If in each worker the local object holds a reference to a proxy for the remote object, then the remote descriptor for the local object prevents the collection of the proxy for the remote object. None of the objects can be collected automatically when code outside the proxy library no longer references them. To avoid leaking, cycles across isolated heaps must be explicitly broken.
 
 ## Using `WeakRef`s and `FinalizationGroup`s together
 
@@ -323,36 +333,22 @@ for (const key of map.keys()) {
 
 Remember to be cautious with use of powerful constructs like this iterable WeakMap. Web APIs designed with semantics analogous to these are widely considered to be legacy mistakes. It’s best to avoid exposing garbage collection timing in your applications, and to use weak references and finalizers only where a problem cannot be reasonably solved in other ways.
 
-### Finalizers, visibility, and turns: final notes of caution
+#### WeakMaps remain fundamental
 
-As mentioned above, finalizers run after an object is collected, in a separate microtask.  An object can be collected at any point where it is no longer needed to compute the result of a computation.  JavaScript implementations have a wide latitude to determine what this means in practice.  For example, consider this async function:
-
-```js
-async function process(x) {
-  const p = x.p;
-  await new Promise(resolve => setTimeout(resolve));
-  return handle(p);
-}
-```
-
-Let's assume that `x.p` is a pointer to WebAssembly memory associated with `x`, and that `x` has a finalizer that frees the associated memory.  An implementation is free to collect `x` at any point after the `x.p` property reference, and to finalize it during the `await`, making the `handle(p)` call operate on a pointer to freed memory.  From a language perspective, the fact that `x` was an argument to a function does not prevent it from being collected.  Additionally the `return handle(p)` call is a tail call, which an engine may implement as throwing away any stack frame with the `x` binding, which is another opportunity for `x` to become collectible.
-
-In practice, the fact that finalizers are delayed until a future task will prevent most early-finalization bugs.  However, developers writing libraries that use `FinalizationGroup` should be wary of the interactions of async functions with finalizers, and avoid exposing invalidatable internals of finalizable objects.
-
-### Limitations with some reference cycles
-
-WeakRef and Finalizers do not solve on their own all memory leak problems.
-
-For example, it is not possible to re-create a `WeakMap` simply by using a `Map` with `WeakRef` objects as keys: if the value in such a map references its key, the entry cannot be collected. A real `WeakMap` implementation uses [ephemerons](http://www.jucs.org/jucs_14_21/eliminating_cycles_in_weak/jucs_14_21_3481_3497_barros.pdf) to allow the garbage collector to handle such cycles.\
+It is not possible to re-create a `WeakMap` simply by using a `Map` with `WeakRef` objects as keys: if the value in such a map references its key, the entry cannot be collected. A real `WeakMap` implementation uses [ephemerons](http://www.jucs.org/jucs_14_21/eliminating_cycles_in_weak/jucs_14_21_3481_3497_barros.pdf) to allow the garbage collector to handle such cycles.\
 This is the reason the [`IterableWeakMap` example](#iterable-weakmaps) keeps the value in a `WeakMap` and only puts the `WeakRef` in a `Set` for iterations. If the value had instead been added to a `Map` such as `this.#refMap.set(ref, value)`, then the following would have leaked:
 ```js
 let key = { foo: 'bar' };
 const map = new IterableWeakMap(key, { data: 123, key });
 ```
 
-When isolated heaps and multiple garbage collectors are involved such as in the [cross-worker proxies example](#avoid-memory-leaks-for-cross-worker-proxies), reference cycles across them also cannot be collected.\
-If in each worker the local object holds a reference to a proxy for the remote object, then the remote descriptor for the local object prevents the collection of the proxy for the remote object. None of the objects can be collected automatically when code outside the proxy library no longer references them.\
-To avoid leaking, cycles across isolated heaps must be explicitly broken.
+### Scheduling of finalizers and consistency of multiple `.deref`()` calls
+
+There are several conditions where implementations may call finalization callbacks later or not at all. The WeakRefs proposal works with host environments (e.g., HTML, Node.js) to define exactly how the `FinalizationGroup` callback is scheduled. The intention is to coarsen the granularity of observability of garbage collection, making it less likely that programs will depend too closely on the details of any particular implementation.
+
+In [the definition for HTML](https://github.com/whatwg/html/pull/4571), the callback is scheduled in [task queued in the event loop](https://html.spec.whatwg.org/multipage/webappapis.html#event-loops). What this means is that, on the web, finalizers will never interrupt synchronous JavaScript, and that they also won't be interspersed to Promise reactions. Instead, they are run only after JavaScript yields to the event loop.
+
+The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref()` return the same result within a certain timespan: either all should return `undefined`, or all should return the object. In HTML, this timespan runs until a [microtask checkpoint](https://html.spec.whatwg.org/multipage/webappapis.html#perform-a-microtask-checkpoint), where HTML performs a microtask checkpoint when the JavaScript execution stack becomes empty, after all Promise reactions have run.
 
 ## Historical documents
 
