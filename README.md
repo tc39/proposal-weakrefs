@@ -39,7 +39,7 @@ function makeWeakCached(f) {
   return key => {
     const ref = cache.get(key);
     if (ref) {
-      const cached = ref.deref();
+      const cached = ref.get();
       if (cached !== undefined) return cached;
     }
 
@@ -57,7 +57,7 @@ This technique can help avoid spending a lot of memory on `ArrayBuffer`s that no
 A few elements of the API are visible in this example:
 
 - The `WeakRef` constructor takes an argument, which has to be an object, and returns a weak reference to it.
-- `WeakRef` instances have a `deref` method that returns one of two values:
+- `WeakRef` instances have a `get` method that returns one of two values:
   - The object passed into the constructor, if it’s still available.
   - `undefined`, if nothing else was pointing to the object and it was already garbage-collected.
 
@@ -180,14 +180,14 @@ function makeWeakCached(f) {
     for (const key of iterator) {
       // See note below on concurrency considerations.
       const ref = cache.get(key);
-      if (ref && !ref.deref()) cache.delete(key);
+      if (ref && !ref.get()) cache.delete(key);
     }
   });
 
   return key => {
     const ref = cache.get(key);
     if (ref) {
-      const cached = ref.deref();
+      const cached = ref.get();
       // See note below on concurrency considerations.
       if (cached !== undefined) return cached;
     }
@@ -261,7 +261,7 @@ class IterableWeakMap {
 
   *[Symbol.iterator]() {
     for (const [ref, value] of this.#refMap) {
-      const key = ref.deref();
+      const key = ref.get();
       if (key) yield [key, value];
     }
   }

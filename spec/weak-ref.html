@@ -3,7 +3,7 @@
   <p>
     A WeakRef is an object that is used to refer to a target object
     without preserving it from garbage collection. WeakRefs can
-    dereference to allow access to the target object, if the target
+    be dereferenced to allow access to the target object, if the target
     object hasn't been reclaimed by garbage collection.
   </p>
 
@@ -89,8 +89,8 @@
       <li>does not have a [[Target]] internal slot.</li>
     </ul>
 
-    <emu-clause id="sec-weak-ref.prototype.deref">
-      <h1>WeakRef.prototype.deref ( )</h1>
+    <emu-clause id="sec-weak-ref.prototype.get">
+      <h1>WeakRef.prototype.get ( )</h1>
       <p>The following steps are taken:</p>
       <emu-alg>
         1. Let _weakRef_ be the *this* value.
@@ -116,13 +116,13 @@
 
           ... later ...
 
-          if (weakRef.deref()) {
-            weakRef.deref().foo();
+          if (weakRef.get()) {
+            weakRef.get().foo();
           }
         </pre>
 
-        In the above example, if the first deref evaluates to true
-        then the second deref can not fail.
+        In the above example, if the first get evaluates to true
+        then the second get can not fail.
       </emu-note>
     </emu-clause>
 
