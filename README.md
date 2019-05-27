@@ -11,7 +11,7 @@ These interfaces can be used independently or together, depending on the use cas
 
 ## A note of caution
 
-This proposal contains two advanced features, `WeakRefs` and `FinalizationGroups`. Their correct use takes careful thought, and they are best avoided if possible.
+This proposal contains two advanced features, `WeakRef`s and `FinalizationGroup`s. Their correct use takes careful thought, and they are best avoided if possible.
 
 [Garbage collectors](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)) are complicated. If an application or library depends on GC cleaning up a WeakRef or calling a finalizer in a timely, predictable manner, it's likely to be disappointed: the cleanup may happen much later than expected, or not at all. Sources of variability include:
 - One object might be garbage-collected much sooner than another object, even if they become unreachable at the same time, e.g., due to generational collection.
@@ -21,7 +21,7 @@ This proposal contains two advanced features, `WeakRefs` and `FinalizationGroups
 - Different JavaScript engines may do these things differently, or the same engine may change its algorithms across versions.
 - Complex factors may lead to objects being held alive for unexpected amounts of time, such as use with certain APIs.
 
-If important logic is placed in the code path of a finalizer, it can transform memory management bugs into user-facing bugs. For example, if data is saved persistently from a finalizer, then a bug which accidentally keeps an additional reference around could lead to data loss.
+Important logic should not be placed in the code path of a finalizer. Doing so could create user-facing issues triggered by memory management bugs, or even differences between JavaScript garbage collector implementations. For example, if data is saved persistently solely from a finalizer, then a bug which accidentally keeps an additional reference around could lead to data loss.
 
 For this reason, the [W3C TAG Design Principles](https://w3ctag.github.io/design-principles/#js-gc) recommend against creating APIs that expose garbage collection. It's best if `WeakRef`s and `FinalizationGroup`s are used as a way to avoid excess memory usage, or as a backstop against certain bugs, rather than as a normal way to clean up external resources or observe what's allocated.
 
@@ -80,7 +80,7 @@ All that said, sometimes finalizers are the right answer to a problem.  The foll
 
 Finalizers can locate external resource leaks. For example, if an open file is garbage collected, the underlying operating system resource could be leaked. Although the OS will likely free the resources when the process exits, this sort of leak could make long-running processes eventually exhaust the number of file handles available. To catch these bugs, a `FinalizationGroup` can be used to log the existence of file objects which are garbage collected before being closed.
 
-The `FinalizationGroup` class represents a group of objects registered with a common finalizer callback. This construct can be used to return the linear memory allocation to the free list when the related JavaScript object is garbage-collected.
+The `FinalizationGroup` class represents a group of objects registered with a common finalizer callback. This construct can be used to inform the developer about the never-closed files.
 
 ```js
 class FileStream {
@@ -126,7 +126,7 @@ This example shows usage of the whole `FinalizationGroup` API:
 - An object can have a finalizer referenced by calling the `register` method of `FinalizationGroup`. In this case, three arguments are passed to the `register` method:
   - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
   - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. Here, the holdings are the underlying `File` object.
-  - An unregistration token, which is used again when the finalizer is indicated to no longer be needed, in the `unregister` method`.
+  - An unregistration token, which is used again when the finalizer is indicated to no longer be needed, in the `unregister` method.
 - The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
 
 The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate "holdings" value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
@@ -137,7 +137,7 @@ In the above code sample, the `fs` object will be unregistered as part of the `c
 
 Whenever you have a JavaScript object that is backed by something in WebAssembly, you might want to run custom cleanup code (in WebAssembly or JavaScript) when the object goes away. A [previous proposal](https://github.com/lars-t-hansen/moz-sandbox/blob/master/refmap/ReferenceMap.md) exposed a collection of weak references, with the idea that finalization actions could be taken by periodically checking if they are still alive. This proposal includes a first-class concept of finalizers in order to give developers a way to avoid that repeated scanning.
 
-For example, imagine if you have a big `WebAssembly.Memory` object, and you want to create an allocator to give fixed-size portions of it to JavaScript. In some cases, it may be practical to explicitly free this memory, but typically, JavaScript code passes around references freely, without thinking about ownership. So it's helpful to be able to rely on the garbage collector to release this memory.
+For example, imagine if you have a big `WebAssembly.Memory` object, and you want to create an allocator to give fixed-size portions of it to JavaScript. In some cases, it may be practical to explicitly free this memory, but typically, JavaScript code passes around references freely, without thinking about ownership. So it's helpful to be able to rely on the garbage collector to release this memory. A `FinalizationGroup` can be used to free the memory.
 
 ```js
 function makeAllocator(size, length) {
