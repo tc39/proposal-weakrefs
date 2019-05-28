@@ -111,12 +111,24 @@
 
       <ul>
         <li>
-          If all references to a ECMAScript object are from a
-          [[Target]] field or internal slot, including the agent's [[KeptAlive]] field,
-          the implementation may replace the reference to the object in all such
-          [[Target]] fields or internal slots with the value ~empty~.
+          If the following conditions about an ECMAScript object are met, then
+          the implementation may replace each reference to the object from the
+          [[Target]] field of a FinalizationGroup's [[Cells]] List, or the
+          [[Target]] internal slot of a WeakRef, to the value ~empty~:
+          <ul>
+            <li>The object is not included in any agent's [[KeptAlive]] List.</li>
+            <li>
+                No possible future execution of the program would observably
+                reference the object, except through a chain of references which
+                includes a [[Target]] field or [[Target]] internal slot.
+              </p>
+              <p>
+                NOTE: The exact guarantee remains under discussion in
+                <a href="https://github.com/tc39/proposal-weakrefs/issues/115">#115</a>.
+              </p>
+            </li>
+          </ul>
         </li>
-
         <li>
           When there is a FinalizationGroup _fg_ such that
           CheckForEmptyCells(_fg_) is *true*, the implementation may perform
