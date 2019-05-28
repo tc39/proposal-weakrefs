@@ -120,7 +120,8 @@
             <li>
                 No possible future execution of the program would observably
                 reference the object, except through a chain of references which
-                includes a [[Target]] field or [[Target]] internal slot.
+                includes a [[Target]] field of a FinalizationGroup's [[Cells]] List,
+                or the [[Target]] internal slot of a WeakRef.
               </p>
               <p>
                 NOTE: The exact guarantee remains under discussion in
