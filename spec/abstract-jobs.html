@@ -100,6 +100,33 @@
       </p>
     </emu-clause>
 
+    <emu-clause id="sec-liveness">
+      <h1>Liveness</h1>
+
+      An object _obj_ is considered <dfn>live</dfn> if the following conditions
+      are met:
+
+      <ul>
+        <li>_obj_ is not included in any agent's [[KeptAlive]] List.</li>
+        <li>
+          No possible future execution of the program would observably
+          reference _obj_, except through a chain of references which
+          includes a [[Target]] field of a FinalizationGroup's [[Cells]] List,
+          or the [[Target]] internal slot of a WeakRef.
+        </li>
+      </ul>
+      <emu-note>
+        The above definition implies that, if a key in a WeakMap is not live,
+        then its corresponding value is not necessarily live either. Presence
+        of an object as a key in a WeakMap or a member of a WeakSet does not
+        imply that the object is live.
+      </emu-note>
+      <emu-note type=editor>
+        The exact definition of liveness remains under discussion in
+        <a href="https://github.com/tc39/proposal-weakrefs/issues/115">#115</a>.
+      </p>
+    </emu-clause>
+
     <emu-clause id="sec-weakref-execution">
       <h1>Execution</h1>
 
@@ -111,24 +138,10 @@
 
       <ul>
         <li>
-          If the following conditions about an ECMAScript object are met, then
-          the implementation may replace each reference to the object from the
-          [[Target]] field of a FinalizationGroup's [[Cells]] List, or the
-          [[Target]] internal slot of a WeakRef, to the value ~empty~:
-          <ul>
-            <li>The object is not included in any agent's [[KeptAlive]] List.</li>
-            <li>
-                No possible future execution of the program would observably
-                reference the object, except through a chain of references which
-                includes a [[Target]] field of a FinalizationGroup's [[Cells]] List,
-                or the [[Target]] internal slot of a WeakRef.
-              </p>
-              <p>
-                NOTE: The exact guarantee remains under discussion in
-                <a href="https://github.com/tc39/proposal-weakrefs/issues/115">#115</a>.
-              </p>
-            </li>
-          </ul>
+          If an object is not live, then the implementation may replace any
+          reference to the object from the [[Target]] field of a
+          FinalizationGroup's [[Cells]] List, or the [[Target]] internal slot
+          of a WeakRef, to the value ~empty~.
         </li>
         <li>
           When there is a FinalizationGroup _fg_ such that
