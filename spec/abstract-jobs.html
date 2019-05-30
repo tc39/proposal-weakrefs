@@ -107,9 +107,9 @@
       are met:
 
       <ul>
-        <li>_obj_ is not included in any agent's [[KeptAlive]] List.</li>
+        <li>_obj_ is included in any agent's [[KeptAlive]] List.</li>
         <li>
-          No possible future execution of the program would observably
+          Any possible future execution of the program could observably
           reference _obj_, except through a chain of references which
           includes a [[Target]] field of a FinalizationGroup's [[Cells]] List,
           or the [[Target]] internal slot of a WeakRef.
