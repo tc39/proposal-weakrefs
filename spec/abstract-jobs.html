@@ -130,25 +130,19 @@
     <emu-clause id="sec-weakref-execution">
       <h1>Execution</h1>
 
-      <p>
-        At any time, an ECMAScript implementation may perform any of the three
-        following actions. They may be triggered interspersed with ECMAScript
-        code execution, or, e.g., from a separate parallel thread.
-      </p>
+        At any time, if an object _obj_ is not live, an ECMAScript implementation may perform the following steps atomically:
 
-      <ul>
-        <li>
-          If an object is not live, then the implementation may replace any
-          reference to the object from the [[Target]] field of a
-          FinalizationGroup's [[Cells]] List, or the [[Target]] internal slot
-          of a WeakRef, to the value ~empty~.
-        </li>
-        <li>
-          When there is a FinalizationGroup _fg_ such that
-          CheckForEmptyCells(_fg_) is *true*, the implementation may perform
-          HostCleanupFinalizationGroup(_fg_).
-        </li>
-      </ul>
+      <emu-alg>
+        1. For each WeakRef _ref_ such that _ref_.[[Target]] is _obj_,
+          1. Set _ref_.[[Target]] to ~empty~.
+        1. For each FinalizationGroup _fg_ such that _fg_.[[Cells]] contains _cell_, such that _cell_.[[Target]] is _obj_,
+          1. Set _cell_.[[Target]] to ~empty~.
+          1. Optionally, perform ! HostCleanupFinalizationGroup(_fg_).
+        1. For each WeakMap _map_ such that _map_.[[WeakMapData]] contains a record _r_ such that _r_.[[Key]] is _obj_,
+          1. Remove _r_ from _map_.[[WeakMapData]].
+        1. For each WeakSet _set_ such that _set_.[[WeakSetData]] contains _obj_,
+          1. Remove _obj_ from _set_.[[WeakSetData]].
+      </emu-alg>
     </emu-clause>
 
     <emu-clause id="sec-weakref-host-hooks">
