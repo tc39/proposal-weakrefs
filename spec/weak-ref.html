@@ -141,10 +141,19 @@
 <emu-clause id="sec-collection-modifications">
   <h1>Modifications to collection type definitions</h1>
   <emu-note type=editor>
-    WeakMap and WeakSet keys are not kept alive just because a WeakRef points
-    to them. This proposal rephrases the definition of WeakMaps and WeakSets
-    to explain their observable effects on garbage collection, rather than
-    specifying operationally that non-live keys or members are deleted.
+    <p>
+      WeakMap and WeakSet keys are not kept alive just because a WeakRef points
+      to them. This proposal rephrases the definition of WeakMaps and WeakSets
+      to explain their observable effects on garbage collection, rather than
+      specifying operationally that non-live keys or members are deleted.
+    </p>
+
+    <p>
+      Open questions remain under discussion about the relationship between when
+      elements are collected in WeakMaps, WeakSets and WeakRefs, e.g.,
+      what guarantees are made about timing, c.f.
+      <a href="https://github.com/tc39/proposal-weakrefs/pull/121#issuecomment-497142235">#121 (comment)</a>.
+    </p>
   </emu-note>
 
   <emu-clause id="sec-weakmap">
