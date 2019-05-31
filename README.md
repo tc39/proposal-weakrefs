@@ -92,17 +92,16 @@ class FileStream {
   
   static #finalizationGroup = new FinalizationGroup(this.#cleanUp);
 
-  #token = {};
   #file;
 
   constructor(fileName) {
     this.#file = new File(fileName);
-    FileStream.#finalizationGroup.register(this, this.#file, this.#token);
+    FileStream.#finalizationGroup.register(this, this.#file, this);
     // eagerly trigger async read of file contents into this.data
   }
 
   close() {
-    FileStream.#finalizationGroup.unregister(this.#token);
+    FileStream.#finalizationGroup.unregister(this);
     File.close(this.#file);
     // other cleanup
   }
@@ -126,7 +125,7 @@ This example shows usage of the whole `FinalizationGroup` API:
 - An object can have a finalizer referenced by calling the `register` method of `FinalizationGroup`. In this case, three arguments are passed to the `register` method:
   - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
   - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. Here, the holdings are the underlying `File` object.
-  - An unregistration token, which is used again when the finalizer is indicated to no longer be needed, in the `unregister` method.
+  - An unregistration token, which is passed to the `unregister` method when the finalizer is no longer needed. Here we use `this`, the `FileStream` object itself, since `FinalizationGroup` doesn't hold a strong reference to the unregister token.
 - The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
 
 The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate "holdings" value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
