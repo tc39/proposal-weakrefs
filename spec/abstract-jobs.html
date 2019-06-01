@@ -111,15 +111,21 @@
         <li>
           Any possible future execution of the program could observably
           reference _obj_, except through a chain of references which
-          includes a [[Target]] field of a FinalizationGroup's [[Cells]] List,
-          or the [[Target]] internal slot of a WeakRef.
+          includes the [[Target]] internal slot of a WeakRef.
         </li>
       </ul>
       <emu-note>
+        Presence of an object in an internal slot does not imply that the
+        object is live. For example if the object in the internal slot is never
+        passed back to the program, then it cannot be observed through the
+        internal slot.
+
+        This is the case for keys in a WeakMap, members of a WeakSet, as well
+        as the [[Target]] and [[UnregisterToken]] fields of a FinalizationGroup
+        Cell record.
+        
         The above definition implies that, if a key in a WeakMap is not live,
-        then its corresponding value is not necessarily live either. Presence
-        of an object as a key in a WeakMap or a member of a WeakSet does not
-        imply that the object is live.
+        then its corresponding value is not necessarily live either. 
       </emu-note>
       <emu-note type=editor>
         The exact definition of liveness remains under discussion in
