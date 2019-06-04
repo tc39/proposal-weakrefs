@@ -103,8 +103,8 @@
     <emu-clause id="sec-liveness">
       <h1>Liveness</h1>
 
-      An object _obj_ is considered <dfn>live</dfn> if the following conditions
-      are met:
+      <p>An object _obj_ is considered <dfn>live</dfn> if the following conditions
+      are met:</p>
 
       <ul>
         <li>_obj_ is included in any agent's [[KeptAlive]] List.</li>
@@ -130,7 +130,7 @@
     <emu-clause id="sec-weakref-execution">
       <h1>Execution</h1>
 
-        At any time, if an object _obj_ is not live, an ECMAScript implementation may perform the following steps atomically:
+      <p>At any time, if an object _obj_ is not live, an ECMAScript implementation may perform the following steps atomically:</p>
 
       <emu-alg>
         1. For each WeakRef _ref_ such that _ref_.[[Target]] is _obj_,
