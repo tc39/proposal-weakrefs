@@ -187,10 +187,8 @@
       <h1>CreateFinalizationGroupCleanupIterator ( _finalizationGroup_ )</h1>
       <p>The following steps are taken:</p>
       <emu-alg>
-        1. If Type(_finalizationGroup_) is not Object, throw a
-        *TypeError* exception.
-        1. If _finalizationGroup_ does not have a [[Cells]]
-        internal slot, throw a *TypeError* exception.
+        1. Assert: Type(_finalizationGroup_) is Object.
+        1. Assert: _finalizationGroup_ has a [[Cells]] internal slot.
         1. Assert: _finalizationGroup_.[[Realm]].[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]] exists and has been initialized.
         1. Let _prototype_ be _finalizationGroup_.[[Realm]].[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]].
         1. Let _iterator_ be ObjectCreate(_prototype_, &laquo; [[FinalizationGroup]] &raquo;).
@@ -218,8 +216,7 @@
             1. If _iterator_ does not have a [[FinalizationGroup]] internal slot,
             throw a *TypeError* exception.
             1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
-            1. If _finalizationGroup_ is *undefined*, then
-              1. Return CreateIterResultObject(*undefined*, *true*).
+            1. Assert: Type(_finalizationGroup_) is Object.
             1. Assert: _finalizationGroup_ has [[Cells]] and [[IsFinalizationGroupCleanupJobActive]] internal slots.
             1. If _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] is *false*,
             throw a *TypeError* exception.
