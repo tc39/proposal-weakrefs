@@ -127,7 +127,7 @@
         *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]]
         internal slot, throw a *TypeError* exception.
-        1. If Type(_unregisterToken_) is not Object, through a *TypeError* exception.
+        1. If Type(_unregisterToken_) is not Object, throw a *TypeError* exception.
         1. Let _removed_ be *false*.
         1. For each Record { [[Target]], [[Holdings]],
         [[UnregisterToken]] } _cell_ that is an element of
@@ -168,7 +168,7 @@
       FinalizationGroup instances are ordinary objects that inherit
       properties from the FinalizationGroup
       prototype. FinalizationGroup instances also have [[Cells]]
-      and [[CleanupCallback]] internal slot.
+      and [[CleanupCallback]] internal slots.
     </p>
   </emu-clause>
 
@@ -202,7 +202,7 @@
 
      <emu-clause id="sec-%finalizationgroupcleanupiterator%-object">
       <h1>The %FinalizationGroupCleanupIteratorPrototype% Object</h1>
-      <p>The <dfn>%FinalizationGroupCleanupIteratorPrototyp%</dfn> object:</p>
+      <p>The <dfn>%FinalizationGroupCleanupIteratorPrototype%</dfn> object:</p>
       <ul>
         <li>has properties that are inherited by all FinalizationGroup
           Cleanup Iterator Objects.</li>
@@ -221,7 +221,7 @@
             1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
             1. If _finalizationGroup_ is *undefined*, then
               1. Return CreateIterResultObject(*undefined*, *true*).
-            1. Assert: _finalizationGroup_ has [[Cells]] and [[IsFinalizationGroupCleanupJobActive]] internal slot.
+            1. Assert: _finalizationGroup_ has [[Cells]] and [[IsFinalizationGroupCleanupJobActive]] internal slots.
             1. If _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] is *false*,
             throw a *TypeError* exception.
             1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is ~empty~,
@@ -244,7 +244,7 @@
       <p>FinalizationGroup Cleanup Iterator instances are ordinary
         objects that inherit properties from the
         %FinalizationGroupCleanupIteratorPrototype% intrinsic
-        object. FinalizationGroup Cleanup Iteratorinstances are
+        object. FinalizationGroup Cleanup Iterator instances are
         initially created with a [[FinalizationGroup]] internal slot.
     </emu-clause>
 
