@@ -89,7 +89,7 @@ class FileStream {
       console.error(`File leaked: ${file}!`);
     }
   }
-  
+
   static #finalizationGroup = new FinalizationGroup(this.#cleanUp);
 
   #token = {};
@@ -366,6 +366,6 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 
 ## Status
 
-* WeakReferences are now Stage 2
+* WeakRefs are now Stage 3
 * Till has a prototype of the new API in the SpiderMonkey console
 * Available behind the --harmony-weak-refs flag in V8, by Marja Hölttä
