@@ -368,4 +368,4 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 
 * WeakReferences are now Stage 2
 * Till has a prototype of the new API in the SpiderMonkey console
-* Available behind the --harmony-weak-refs flag in V8, by Marja Hölttä
+* [Available behind the `--harmony-weak-refs` flag in V8, by Marja Hölttä](https://bugs.chromium.org/p/v8/issues/detail?id=8179)
