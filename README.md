@@ -341,7 +341,7 @@ let key = { foo: 'bar' };
 const map = new IterableWeakMap(key, { data: 123, key });
 ```
 
-### Scheduling of finalizers and consistency of multiple `.deref`()` calls
+### Scheduling of finalizers and consistency of multiple `.deref()` calls
 
 There are several conditions where implementations may call finalization callbacks later or not at all. The WeakRefs proposal works with host environments (e.g., HTML, Node.js) to define exactly how the `FinalizationGroup` callback is scheduled. The intention is to coarsen the granularity of observability of garbage collection, making it less likely that programs will depend too closely on the details of any particular implementation.
 
