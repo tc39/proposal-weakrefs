@@ -104,6 +104,16 @@
       <h1>Liveness</h1>
 
       <p>
+        An execution <dfn>eagerly empties WeakRefs</dfn> if it performs the
+        following steps after every step of evaluation.
+      </p>
+      <emu-alg>
+        1. For each WeakRef _ref_,
+          1. Let _obj_ be _ref_.[[Target]].
+          1. If _obj_ is not included in any agent's [[KeptAlive]] List, then set _ref_.[[Target]] to ~empty~.
+      </emu-alg>
+
+      <p>
         At any point during evaluation, an object _obj_ is
         considered <dfn>live</dfn> if the following conditions are met:
       </p>
@@ -111,10 +121,8 @@
       <ul>
         <li>_obj_ is included in any agent's [[KeptAlive]] List.</li>
         <li>
-          There exists a valid future execution of the program where, if after
-          every step of evaluation, all WeakRef instances' [[Target]] internal
-          slots whose values are not included in any agent's [[KeptAlive]] List
-          are set to ~empty~, the Object value of _obj_ is observed.
+          There exists a valid future execution that both eagerly empties
+          WeakRefs and observes the Object value of _obj_.
         </li>
       </ul>
       <emu-note>
