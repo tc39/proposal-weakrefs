@@ -89,7 +89,10 @@
         object %ObjectPrototype%.
       </li>
       <li>is an ordinary object.</li>
-      <li>does not have a [[Target]] internal slot.</li>
+      <li>
+        does not have [[Cells]], [[CleanupCallback]], and
+        [[IsFinalizationGroupCleanupJobActive]] internal slots.
+      </li>
     </ul>
 
     <emu-clause id="sec-finalization-group.prototype.constructor">
