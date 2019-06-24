@@ -150,7 +150,7 @@
         internal slot, throw a *TypeError* exception.
         1. If _callback_ is not *undefined* and IsCallable(_callback_) is
         *false*, throw a *TypeError* exception.
-        1. Perform ! CleanupFinalizationGroup(_finalizationGroup_, _callback_).
+        1. Perform ? CleanupFinalizationGroup(_finalizationGroup_, _callback_).
         1. Return *undefined*.
       </emu-alg>
     </emu-clause>
