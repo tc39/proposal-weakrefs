@@ -89,7 +89,10 @@
         object %ObjectPrototype%.
       </li>
       <li>is an ordinary object.</li>
-      <li>does not have a [[Target]] internal slot.</li>
+      <li>
+        does not have [[Cells]], [[CleanupCallback]], and
+        [[IsFinalizationGroupCleanupJobActive]] internal slots.
+      </li>
     </ul>
 
     <emu-clause id="sec-finalization-group.prototype.constructor">
@@ -166,9 +169,9 @@
     <h1>Properties of FinalizationGroup Instances</h1>
     <p>
       FinalizationGroup instances are ordinary objects that inherit
-      properties from the FinalizationGroup
-      prototype. FinalizationGroup instances also have [[Cells]]
-      and [[CleanupCallback]] internal slots.
+      properties from the FinalizationGroup prototype. FinalizationGroup
+      instances also have [[Cells]], [[CleanupCallback]], and 
+      [[IsFinalizationGroupCleanupJobActive]] internal slots.
     </p>
   </emu-clause>
 
