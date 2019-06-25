@@ -113,6 +113,10 @@
           reference _obj_, except through a chain of references which
           includes the [[Target]] internal slot of a WeakRef.
         </li>
+        <li>
+          _obj_ is a FinalizationGroup instance such that _obj_.[[Cells]]
+           contains a _cell_, such that _cell_.[[Target]] is not ~empty~.
+        </li>
       </ul>
       <emu-note>
         Presence of an object in an internal slot does not imply that the
