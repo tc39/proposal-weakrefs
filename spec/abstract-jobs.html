@@ -195,6 +195,20 @@
         such as rematerialization that observably empty the WeakRef are
         prohibited.
       </emu-note>
+
+      <emu-note>
+        Every FinalizationGroup instance must be considered for cells to
+        empty in step 2., regardless of the liveness of the FinalizationGroup.
+
+        Furthermore, during an Execution, if the implementation would perform
+        HostCleanupFinalizationGroup(_fg_) in step 2.b. for a live
+        FinalizationGroup, it must perform HostCleanupFinalizationGroup(_fg_)
+        in that Execution for a FinalizationGroup that is not live.
+
+        A program with two FinalizationGroup, one live and one not, should
+        observe either both or neither cleanup callback being called after the
+        same object registered with them becomes unreachable.
+      </emu-note>
     </emu-clause>
 
     <emu-clause id="sec-weakref-host-hooks">
