@@ -124,7 +124,7 @@ Note, it's not a good idea to close files automatically through a finalizer, as 
 This example shows usage of the whole `FinalizationGroup` API:
 - An object can have a finalizer referenced by calling the `register` method of `FinalizationGroup`. In this case, three arguments are passed to the `register` method:
   - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
-  - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. Here, the holdings are the underlying `File` object.
+  - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. Here, the holdings are the underlying `File` object. (Note: holdings should not have a reference to the weak target, as that would prevent the target from being collected.)
   - An unregistration token, which is passed to the `unregister` method when the finalizer is no longer needed. Here we use `this`, the `FileStream` object itself, since `FinalizationGroup` doesn't hold a strong reference to the unregister token.
 - The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
 
