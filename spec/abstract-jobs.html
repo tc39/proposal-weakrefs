@@ -104,39 +104,45 @@
       <h1>Liveness</h1>
 
       <p>
-        An execution <dfn>eagerly empties WeakRefs</dfn> if it performs the
-        following steps after every step of evaluation.
+        For some object _obj_, a <dfn>hypothetical WeakRef-oblivious</dfn>
+        execution with respect to _obj_ is an execution whereby
+        WeakRef.prototype.deref being called on a WeakRef whose referent is
+        _obj_ always returns *undefined*.
       </p>
-      <emu-alg>
-        1. For each WeakRef _ref_,
-          1. Let _obj_ be _ref_.[[Target]].
-          1. If _obj_ is not included in any agent's [[KeptAlive]] List, then set _ref_.[[Target]] to ~empty~.
-      </emu-alg>
+      <emu-note>
+        WeakRef-obliviousness, together with liveness, capture two
+        notions. One, that a WeakRef itself does not keep an object alive. Two,
+        that cycles in liveness does not imply that an object is live. To be
+        concrete, if determining _obj_'s liveness depends on determining the
+        liveness of another WeakRef referent, _obj2_, _obj2_'s liveness cannot
+        assume _obj_'s liveness, which would beg the question.
+      </emu-note>
 
       <p>
         At any point during evaluation, an object _obj_ is
-        considered <dfn>live</dfn> if the following conditions are met:
+        considered <dfn>live</dfn> if either of the following conditions is
+        met:
       </p>
 
       <ul>
         <li>_obj_ is included in any agent's [[KeptAlive]] List.</li>
         <li>
-          There exists a valid future execution that both eagerly empties
-          WeakRefs and observes the Object value of _obj_.
+          There exists a valid future hypothetical WeakRef-oblivious execution
+          with respect to _obj_ that observes the Object value of _obj_.
         </li>
       </ul>
       <emu-note>
         The intuition the second condition above intends to capture is that an
-        object is live if its identity is observable via non-WeakRef means.
-        For example, an object's identity may be observed by observing a strict
-        equality comparison between objects or observing the object being used
-        as key in a Map.
+        object is live if its identity is observable via non-WeakRef means. An
+        object's identity may be observed by observing a strict equality
+        comparison between objects or observing the object being used as key in
+        a Map.
       </emu-note>
       <emu-note>
-        Presence of an object in an internal slot does not imply that the
-        object is live. For example if the object in the internal slot is never
-        passed back to the program, then it cannot be observed through the
-        internal slot.
+        Presence of an object in a field, an internal slot, or a property does
+        not imply that the object is live. For example if the object in
+        question is never passed back to the program, then it cannot be
+        observed.
 
         This is the case for keys in a WeakMap, members of a WeakSet, as well
         as the [[Target]] and [[UnregisterToken]] fields of a FinalizationGroup
@@ -144,6 +150,12 @@
 
         The above definition implies that, if a key in a WeakMap is not live,
         then its corresponding value is not necessarily live either.
+      </emu-note>
+      <emu-note>
+        Liveness is the lower bound for guaranteeing which WeakRefs that
+        engines must not empty. In practice, liveness as defined here is
+        undecidable and engines use conservative approximations. There is
+        expected to be significant implementation leeway.
       </emu-note>
       <emu-note type=editor>
         The exact definition of liveness remains under discussion in
