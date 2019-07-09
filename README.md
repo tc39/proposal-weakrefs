@@ -349,6 +349,33 @@ In [the definition for HTML](https://github.com/whatwg/html/pull/4571), the call
 
 The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref()` return the same result within a certain timespan: either all should return `undefined`, or all should return the object. In HTML, this timespan runs until a [microtask checkpoint](https://html.spec.whatwg.org/multipage/webappapis.html#perform-a-microtask-checkpoint), where HTML performs a microtask checkpoint when the JavaScript execution stack becomes empty, after all Promise reactions have run.
 
+In other words, for a WeakRef `wr`, synchronous code like the following is guaranteed to return the same result for `wr.deref()`:
+
+```js
+if (wr.deref() !== undefined) {
+  // […]
+  wr.deref().foo();
+  // […]
+  wr.deref().bar();
+  // […]
+}
+```
+
+The guarantee goes away if any of the blanks (`[…]`) introduces a microtask checkpoint, for example if it contains an `await` expression, or if it wraps the remainder of the code in a promise callback (e.g. `Promise.resolve().then(() => […])`).
+
+In general, developers are encouraged to call `WeakRef.prototype.deref` once and re-use the result, as it makes code look cleaner:
+
+```js
+const result = wr.deref();
+if (result !== undefined) {
+  // […]
+  result.foo();
+  // […]
+  result.bar();
+  // […]
+}
+```
+
 ## Historical documents
 
 - [OLD Explanation](https://github.com/tc39/proposal-weakrefs/blob/master/history/weakrefs.md) of a previous version of the proposal
