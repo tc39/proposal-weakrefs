@@ -45,12 +45,12 @@
         1. If IsCallable(_cleanupCallback_) is *false*, throw a *TypeError* exception.
         1. Let _finalizationGroup_ be ? OrdinaryCreateFromConstructor(NewTarget,
         `"%FinalizationGroupPrototype%"`, &laquo; [[Realm]], [[CleanupCallback]], [[Cells]],
-        [[IsFinalizationGroupCleanupJobActive]] &raquo;).
+        [[ActiveFinalizationGroupCleanupIterator]] &raquo;).
         1. Let _fn_ be the active function object.
         1. Set _finalizationGroup_.[[Realm]] to _fn_.[[Realm]].
         1. Set _finalizationGroup_.[[CleanupCallback]] to _cleanupCallback_.
         1. Set _finalizationGroup_.[[Cells]] to be an empty List.
-        1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
+        1. Set _finalizationGroup_.[[ActiveFinalizationGroupCleanupIterator]] to ~empty~.
         1. Return _finalizationGroup_.
     </emu-clause>
   </emu-clause>
@@ -91,7 +91,7 @@
       <li>is an ordinary object.</li>
       <li>
         does not have [[Cells]], [[CleanupCallback]], and
-        [[IsFinalizationGroupCleanupJobActive]] internal slots.
+        [[ActiveFinalizationGroupCleanupIterator]] internal slots.
       </li>
     </ul>
 
@@ -149,9 +149,9 @@
         1. Let _finalizationGroup_ be the *this* value.
         1. If Type(_finalizationGroup_) is not Object, throw a
         *TypeError* exception.
-        1. If _finalizationGroup_ does not have [[Cells]] and [[IsFinalizationGroupCleanupJobActive]]
+        1. If _finalizationGroup_ does not have [[Cells]] and [[ActiveFinalizationGroupCleanupIterator]]
         internal slots, throw a *TypeError* exception.
-        1. If _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] is *true*,
+        1. If _finalizationGroup_.[[ActiveFinalizationGroupCleanupIterator]] is not ~empty~,
         throw a *TypeError* exception.
         1. If _callback_ is not *undefined* and IsCallable(_callback_) is
         *false*, throw a *TypeError* exception.
@@ -173,7 +173,7 @@
       FinalizationGroup instances are ordinary objects that inherit
       properties from the FinalizationGroup prototype. FinalizationGroup
       instances also have [[Cells]], [[CleanupCallback]], and 
-      [[IsFinalizationGroupCleanupJobActive]] internal slots.
+      [[ActiveFinalizationGroupCleanupIterator]] internal slots.
     </p>
   </emu-clause>
 
@@ -222,8 +222,8 @@
             throw a *TypeError* exception.
             1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
             1. Assert: Type(_finalizationGroup_) is Object.
-            1. Assert: _finalizationGroup_ has [[Cells]] and [[IsFinalizationGroupCleanupJobActive]] internal slots.
-            1. If _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] is *false*,
+            1. Assert: _finalizationGroup_ has [[Cells]] and [[ActiveFinalizationGroupCleanupIterator]] internal slots.
+            1. If SameValue(_finalizationGroup_.[[ActiveFinalizationGroupCleanupIterator]], _iterator_) is *false*,
             throw a *TypeError* exception.
             1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is ~empty~,
               1. Choose any such _cell_.

@@ -261,13 +261,13 @@
     <p> The following steps are performed: </p>
     <emu-alg>
       1. Assert: _finalizationGroup_ has [[Cells]],
-      [[CleanupCallback]], and [[IsFinalizationGroupCleanupJobActive]] internal slots.
+      [[CleanupCallback]], and [[ActiveFinalizationGroupCleanupIterator]] internal slots.
       1. If CheckForEmptyCells(_finalizationGroup_) is *false*, return.
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
       1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
-      1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *true*.
+      1. Set _finalizationGroup_.[[ActiveFinalizationGroupCleanupIterator]] to _iterator_.
       1. Let _result_ be Call(_callback_, *undefined*, &laquo; _iterator_ &raquo;).
-      1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
+      1. Set _finalizationGroup_.[[ActiveFinalizationGroupCleanupIterator]] to ~empty~.
       1. If _result_ is an abrupt completion, return _result_.
       1. Else, return NormalCompletion(*undefined*).
     </emu-alg>
