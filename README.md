@@ -361,7 +361,7 @@ if (wr.deref() !== undefined) {
 }
 ```
 
-The guarantee goes away if any of the blanks (`[…]`) introduces a microtask checkpoint, for example if it contains an `await` expression, or if it wraps the remainder of the code in a promise callback (e.g. `Promise.resolve().then(() => […])`).
+The guarantee goes away if any of the blanks (`[…]`) introduces a microtask checkpoint, for example if it contains an `await` expression.
 
 In general, developers are encouraged to call `WeakRef.prototype.deref` once and re-use the result, as it makes code look cleaner:
 
