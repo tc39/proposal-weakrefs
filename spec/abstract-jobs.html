@@ -268,6 +268,7 @@
       1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *true*.
       1. Let _result_ be Call(_callback_, *undefined*, &laquo; _iterator_ &raquo;).
       1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
+      1. Set _iterator_.[[FinalizationGroup]] to ~empty~.
       1. If _result_ is an abrupt completion, return _result_.
       1. Else, return NormalCompletion(*undefined*).
     </emu-alg>
