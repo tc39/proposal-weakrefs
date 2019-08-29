@@ -163,7 +163,7 @@ This code uses a few features of the `FinalizationGroup` API:
   - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. In this case, the holdings are an integer corresponding to the offset within the `WebAssembly.Memory` object.
 - The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
 
-The `FinalizationGroup` callback is passed an iterator of holdings to give that callback control over how much work it wants to process. The callback may pull in only part of the iterator, and in this case, the rest of the work would be "saved for later". The callback is not called during execution of other JavaScript code, but rather "in between turns"; it is currently proposed to be restricted to run after all of of the `Promise`-related work is done, right before turning control over to the event loop.
+The `FinalizationGroup` callback is passed an iterator of holdings to give that callback control over how much work it wants to process. The callback may pull in only part of the iterator, and in this case, the rest of the work would be "saved for later". The callback is not called during execution of other JavaScript code, but rather "in between turns"; it is currently proposed to be restricted to run after all of the `Promise`-related work is done, right before turning control over to the event loop.
 
 ### Avoid memory leaks for cross-worker proxies
 
