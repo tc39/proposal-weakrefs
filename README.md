@@ -264,7 +264,7 @@ class IterableWeakMap {
 
     this.#weakMap.delete(key);
     this.#refSet.delete(entry.ref);
-    this.#finalizationGroup.unregister(entry.ref);
+    this.#finalizationGroup.unregister(key);
     return true;
   }
 
