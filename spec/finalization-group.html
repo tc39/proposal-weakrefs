@@ -108,9 +108,10 @@
       <emu-alg>
         1. Let _finalizationGroup_ be the *this* value.
         1. If Type(_finalizationGroup_) is not Object, throw a *TypeError* exception.
-        1. If Type(_target_) is not Object, throw a *TypeError* exception.
         1. If _finalizationGroup_ does not have a [[Cells]] internal slot,
         throw a *TypeError* exception.
+        1. If Type(_target_) is not Object, throw a *TypeError* exception.
+        1. If SameValue(_target_, _holdings_), throw a *TypeError* exception.
         1. If Type(_unregisterToken_) is not Object,
           1. If _unregisterToken_ is not *undefined*, throw a *TypeError* exception.
           1. Set _unregisterToken_ to ~empty~.
