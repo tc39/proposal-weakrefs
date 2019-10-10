@@ -156,7 +156,7 @@
         throw a *TypeError* exception.
         1. If _callback_ is not *undefined* and IsCallable(_callback_) is
         *false*, throw a *TypeError* exception.
-        1. Perform ? CleanupFinalizationGroup(_finalizationGroup_, _callback_).
+        1. Perform ? CleanupFinalizationGroup(_finalizationGroup_, *false*, _callback_).
         1. Return *undefined*.
       </emu-alg>
     </emu-clause>
@@ -197,8 +197,9 @@
         1. Assert: _finalizationGroup_ has a [[Cells]] internal slot.
         1. Assert: _finalizationGroup_.[[Realm]].[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]] exists and has been initialized.
         1. Let _prototype_ be _finalizationGroup_.[[Realm]].[[Intrinsics]].[[%FinalizationGroupCleanupIteratorPrototype%]].
-        1. Let _iterator_ be ObjectCreate(_prototype_, &laquo; [[FinalizationGroup]] &raquo;).
+        1. Let _iterator_ be ObjectCreate(_prototype_, &laquo; [[FinalizationGroup]], [[Interrupted]] &raquo; ).
         1. Set _iterator_.[[FinalizationGroup]] to _finalizationGroup_.
+        1. Set _iterator_.[[Interrupted]] to *false*.
         1. Return _iterator_.
       </emu-alg>
     </emu-clause>
@@ -219,8 +220,8 @@
           <emu-alg>
             1. Let _iterator_ be the *this* value.
             1. If Type(_iterator_) is not Object, throw a *TypeError* exception.
-            1. If _iterator_ does not have a [[FinalizationGroup]] internal slot,
-            throw a *TypeError* exception.
+            1. If _iterator_ does not have [[FinalizationGroup]] and
+            [[Interrupted]] internal slots, throw a *TypeError* exception.
             1. If _iterator_.[[FinalizationGroup]] is ~empty~,
             throw a *TypeError* exception.
             1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
@@ -232,6 +233,7 @@
               1. Remove _cell_ from _finalizationGroup_.[[Cells]].
               1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
             1. If the preceding steps were not performed,
+              1. If CheckForEmptyCells(_finalizationGroup_) is *true*, set _iterator_.[[Interrupted]] to *true*.
               1. Return CreateIterResultObject(*undefined*, *true*).
           </emu-alg>
 
@@ -253,8 +255,8 @@
       <p>FinalizationGroup Cleanup Iterator instances are ordinary
         objects that inherit properties from the
         %FinalizationGroupCleanupIteratorPrototype% intrinsic
-        object. FinalizationGroup Cleanup Iterator instances are
-        initially created with a [[FinalizationGroup]] internal slot.
+        object. FinalizationGroup Cleanup Iterator instances also have
+        [[FinalizationGroup]] and [[Interrupted]] internal slots.
     </emu-clause>
 
   </emu-clause>

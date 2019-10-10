@@ -205,10 +205,10 @@
 
         <p>
           HostCleanupFinalizationGroup is an implementation-defined abstract
-          operation that is expected to call CleanupFinalizationGroup(_fg_) at
-          some point in the future, if possible. The host's responsibility is to
-          make this call at a time which does not interrupt synchronous
-          ECMAScript code execution.
+          operation that is expected to call
+          CleanupFinalizationGroup(_fg_, *true*) at some point in the future,
+          if possible. The host's responsibility is to make this call at a
+          time which does not interrupt synchronous ECMAScript code execution.
         </p>
       </emu-clause>
     </emu-clause>
@@ -257,12 +257,12 @@
   </emu-clause>
 
   <emu-clause id="sec-cleanup-finalization-group" aoid="CleanupFinalizationGroup">
-    <h1> CleanupFinalizationGroup ( _finalizationGroup_ [ , _callback_ ] ) </h1>
+    <h1> CleanupFinalizationGroup ( _finalizationGroup_ , _fromHost_ [ , _callback_ ] ) </h1>
     <p> The following steps are performed: </p>
     <emu-alg>
       1. Assert: _finalizationGroup_ has [[Cells]],
       [[CleanupCallback]], and [[IsFinalizationGroupCleanupJobActive]] internal slots.
-      1. If CheckForEmptyCells(_finalizationGroup_) is *false*, return.
+      1. If CheckForEmptyCells(_finalizationGroup_) is *false*, return NormalCompletion(*undefined*).
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
       1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
       1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *true*.
@@ -270,7 +270,9 @@
       1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
       1. Set _iterator_.[[FinalizationGroup]] to ~empty~.
       1. If _result_ is an abrupt completion, return _result_.
-      1. Else, return NormalCompletion(*undefined*).
+      1. If _fromHost_ is *true* and _iterator_.[[Interrupted]] is *true*,
+        1. Perform ! HostCleanupFinalizationGroup(_fg_).
+      1. Return NormalCompletion(*undefined*).
     </emu-alg>
     <emu-note type=editor>When called from HostCleanupFinalizationGroup, if calling the callback throws an error, this will be caught within the RunJobs algorithm and reported to the host. HTML does not apply the RunJobs algorithm, but will also <a href="https://html.spec.whatwg.org/#report-the-error">report the error</a>, which may call `window.onerror`.</emu-note>
   </emu-clause>
