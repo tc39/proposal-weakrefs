@@ -227,10 +227,12 @@
             1. Assert: Type(_finalizationGroup_) is Object.
             1. Assert: _finalizationGroup_ has a [[Cells]] internal slot.
             1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is ~empty~,
+               then an implementation may perform the following steps,
               1. Choose any such _cell_.
               1. Remove _cell_ from _finalizationGroup_.[[Cells]].
               1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
-            1. Otherwise, return CreateIterResultObject(*undefined*, *true*).
+            1. If the preceding steps were not performed,
+              1. Return CreateIterResultObject(*undefined*, *true*).
           </emu-alg>
      </emu-clause>
 
