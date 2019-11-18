@@ -120,6 +120,14 @@
         1. Append _cell_ to _finalizationGroup_.[[Cells]].
         1. Return *undefined*.
       </emu-alg>
+
+      <emu-note>
+        Based on the algorithms and definitions in this specification, across the time when
+        _cell_ is in _finalizationGroup_.[[Cells]], then _cell_.[[Holdings]] is live;
+        however, _cell_.[[UnregisterToken]] and _cell_.[[Target]] are necessarily live.
+        For example, registering an object with itself as its unregister token would not
+        keep the object alive forever.
+      </emu-note>
     </emu-clause>
 
     <emu-clause id="sec-finalization-group.prototype.unregister">
