@@ -180,6 +180,11 @@
           1. Remove _obj_ from _set_.[[WeakSetData]].
       </emu-alg>
 
+      <p>
+        If this algorithm is performed, and if the condition in step 2 is met, then the optional
+        algorithm in step 2.b must be performed after a finite time, absent program termination.
+      </p>
+
       <emu-note>
         Together with the definition of liveness, this clause prescribes legal
         optimizations that an implementation may apply regarding WeakRefs.
