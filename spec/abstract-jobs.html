@@ -145,7 +145,7 @@
         observed.
 
         This is the case for keys in a WeakMap, members of a WeakSet, as well
-        as the [[Target]] and [[UnregisterToken]] fields of a FinalizationGroup
+        as the [[WeakRefTarget]] and [[UnregisterToken]] fields of a FinalizationGroup
         Cell record.
 
         The above definition implies that, if a key in a WeakMap is not live,
@@ -169,10 +169,10 @@
       <p>At any time, if an object _obj_ is not live, an ECMAScript implementation may perform the following steps atomically:</p>
 
       <emu-alg>
-        1. For each WeakRef _ref_ such that _ref_.[[Target]] is _obj_,
-          1. Set _ref_.[[Target]] to ~empty~.
-        1. For each FinalizationGroup _fg_ such that _fg_.[[Cells]] contains _cell_, such that _cell_.[[Target]] is _obj_,
-          1. Set _cell_.[[Target]] to ~empty~.
+        1. For each WeakRef _ref_ such that _ref_.[[WeakRefTarget]] is _obj_,
+          1. Set _ref_.[[WeakRefTarget]] to ~empty~.
+        1. For each FinalizationGroup _fg_ such that _fg_.[[Cells]] contains _cell_, such that _cell_.[[WeakRefTarget]] is _obj_,
+          1. Set _cell_.[[WeakRefTarget]] to ~empty~.
           1. Optionally, perform ! HostCleanupFinalizationGroup(_fg_).
         1. For each WeakMap _map_ such that _map_.[[WeakMapData]] contains a record _r_ such that _r_.[[Key]] is _obj_,
           1. Remove _r_ from _map_.[[WeakMapData]].
@@ -191,7 +191,7 @@
         observably empty WeakRefs that point to such objects.
 
         On the other hand, if an object's identity is observable, and that
-        object is in the [[Target]] internal slot of a WeakRef, optimizations
+        object is in the [[WeakRefTarget]] internal slot of a WeakRef, optimizations
         such as rematerialization that observably empty the WeakRef are
         prohibited.
       </emu-note>
@@ -250,7 +250,7 @@
     <emu-alg>
       1. Assert: _finalizationGroup_ has an [[Cells]] internal slot.
       1. For each _cell_ in _finalizationGroup_.[[Cells]], do
-        1. If _cell_.[[Target]] is ~empty~, then
+        1. If _cell_.[[WeakRefTarget]] is ~empty~, then
           1. Return *true*.
       1. Return *false*.
     </emu-alg>
