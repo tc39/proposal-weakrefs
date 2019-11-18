@@ -195,6 +195,15 @@
         such as rematerialization that observably empty the WeakRef are
         prohibited.
       </emu-note>
+
+      <emu-note>
+        The loop in step 2 iterates over all FinalizationGroup instances, not
+        only ones which are alive. This implies that a FinalizationGroup _fg_ is
+        live if _fg_.[[Cells]] contains any cell _cell_ such that
+        _cell_.[[Target]] is live and may not be live in the future. That is,
+        even if there are no references in JavaScript to the FinalizationGroup,
+        the CleanupFinalizationGroup algorithm may still be triggered.
+      </emu-note>
     </emu-clause>
 
     <emu-clause id="sec-weakref-host-hooks">
