@@ -95,7 +95,7 @@
         Some ECMAScript implementations include garbage collector implementations
         which run in the background, including when ECMAScript is idle. Letting the
         embedding environment schedule CleanupFinalizationGroup allows it to resume
-        ECMAScript execution in order to run finalizer work, which may free up holdings,
+        ECMAScript execution in order to run finalizer work, which may free up held values,
         reducing overall memory usage.
       </p>
     </emu-clause>

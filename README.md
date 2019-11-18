@@ -84,8 +84,8 @@ The `FinalizationGroup` class represents a group of objects registered with a co
 
 ```js
 class FileStream {
-  static #cleanUp(holdings) {
-    for (const file of holdings) {
+  static #cleanUp(heldValues) {
+    for (const file of heldValues) {
       console.error(`File leaked: ${file}!`);
     }
   }
@@ -124,11 +124,11 @@ Note, it's not a good idea to close files automatically through a finalizer, as 
 This example shows usage of the whole `FinalizationGroup` API:
 - An object can have a finalizer referenced by calling the `register` method of `FinalizationGroup`. In this case, three arguments are passed to the `register` method:
   - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
-  - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. Here, the holdings are the underlying `File` object. (Note: holdings should not have a reference to the weak target, as that would prevent the target from being collected.)
+  - A held value, which is used to represent that object when cleaning it up in the finalizer. Here, the held value is the underlying `File` object. (Note: the held value should not have a reference to the weak target, as that would prevent the target from being collected.)
   - An unregistration token, which is passed to the `unregister` method when the finalizer is no longer needed. Here we use `this`, the `FileStream` object itself, since `FinalizationGroup` doesn't hold a strong reference to the unregister token.
-- The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
+- The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the held values.
 
-The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate "holdings" value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
+The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate held value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
 
 In the above code sample, the `fs` object will be unregistered as part of the `close` method, which will mean that the finalizer will not be called, and there will be no error log statement. Unregistration can be useful to avoid other sorts of "double free" scenarios.
 
@@ -160,10 +160,10 @@ function allocate(allocator) {
 This code uses a few features of the `FinalizationGroup` API:
 - An object can have a finalizer referenced by calling the `register` method of `FinalizationGroup`. In this case, two arguments are passed to the `register` method:
   - The object whose lifetime we're concerned with. Here, that's the `Uint8Array`
-  - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. In this case, the holdings are an integer corresponding to the offset within the `WebAssembly.Memory` object.
-- The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
+  - A held value, which is used to represent that object when cleaning it up in the finalizer. In this case, the held value is an integer corresponding to the offset within the `WebAssembly.Memory` object.
+- The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the held values.
 
-The `FinalizationGroup` callback is passed an iterator of holdings to give that callback control over how much work it wants to process. The callback may pull in only part of the iterator, and in this case, the rest of the work would be "saved for later". The callback is not called during execution of other JavaScript code, but rather "in between turns"; it is currently proposed to be restricted to run after all of the `Promise`-related work is done, right before turning control over to the event loop.
+The `FinalizationGroup` callback is passed an iterator of held values to give that callback control over how much work it wants to process. The callback may pull in only part of the iterator, and in this case, the rest of the work would be "saved for later". The callback is not called during execution of other JavaScript code, but rather "in between turns"; it is currently proposed to be restricted to run after all of the `Promise`-related work is done, right before turning control over to the event loop.
 
 ### Avoid memory leaks for cross-worker proxies
 
