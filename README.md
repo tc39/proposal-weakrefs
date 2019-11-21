@@ -80,7 +80,9 @@ All that said, sometimes finalizers are the right answer to a problem.  The foll
 
 Finalizers can locate external resource leaks. For example, if an open file is garbage collected, the underlying operating system resource could be leaked. Although the OS will likely free the resources when the process exits, this sort of leak could make long-running processes eventually exhaust the number of file handles available. To catch these bugs, a `FinalizationGroup` can be used to log the existence of file objects which are garbage collected before being closed.
 
-The `FinalizationGroup` class represents a group of objects registered with a common finalizer callback. This construct can be used to inform the developer about the never-closed files.
+The `FinalizationGroup` class represents a group of objects sharing common finalization logic.
+A finalizer callback is invoked after any of the objects registered with the group have been garbage collected.
+This construct can be used to inform the developer about the never-closed files.
 
 ```js
 class FileStream {
@@ -126,7 +128,8 @@ This example shows usage of the whole `FinalizationGroup` API:
   - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
   - A “holdings” value, which is used to represent that object when cleaning it up in the finalizer. Here, the holdings are the underlying `File` object. (Note: holdings should not have a reference to the weak target, as that would prevent the target from being collected.)
   - An unregistration token, which is passed to the `unregister` method when the finalizer is no longer needed. Here we use `this`, the `FileStream` object itself, since `FinalizationGroup` doesn't hold a strong reference to the unregister token.
-- The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called with an iterator of the holdings values.
+- The `FinalizationGroup` constructor is called with a callback as an argument. This callback is called after a garbage collection occurred and at least one registered object was collected. The finalizer callback is called with an iterator of the holdings values for the registered objects that were collected.\
+In this case a single FinalizationGroup is shared by all `File` objects as a static field of the `File` class. The class' `#cleanUp` callback will be invoked when any `File` instance was garbage collected.
 
 The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate "holdings" value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
 
