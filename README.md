@@ -1,4 +1,4 @@
-# WeakReferences TC39 proposal
+# WeakRefs TC39 proposal
 
 ## Introduction
 
