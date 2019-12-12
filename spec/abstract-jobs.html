@@ -223,20 +223,17 @@
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-keepduringjob" aoid="KeepDuringJob">
-    <h1>KeepDuringJob ( _object_ )</h1>
+  <emu-clause id="sec-addtokeptobjects" aoid="AddToKeptObjects">
+    <h1>AddToKeptObjects ( _object_ )</h1>
     <emu-alg>
       1. Let _agent_ be the surrounding agent.
       1. Append _object_ to _agent_.[[KeptAlive]].
     </emu-alg>
     <emu-note>
-      When the abstract operation
-      KeepDuringJob is called with a target object reference, it adds the
-      target to an identity Set that will point strongly at the target until
-      the end of the current Job. This may be abstractly implemented as a
-      Set in the current Job that becomes unreachable when the Job ends
-      because the Job becomes unreachable, or as a Set in the current Agent
-      that gets cleared at the end of each Job.
+      When the abstract operation AddToKeptObjects is called with a
+      target object reference, it adds the target to an identity Set
+      that will point strongly at the target until ClearKeptObjects is
+      called.
     </emu-note>
   </emu-clause>
 
