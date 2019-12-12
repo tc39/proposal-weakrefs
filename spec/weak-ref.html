@@ -46,7 +46,7 @@
         1. If Type(_target_) is not Object, throw a *TypeError* exception.
         1. Let _weakRef_ be ? OrdinaryCreateFromConstructor(NewTarget,
         `"%WeakRefPrototype%"`, &laquo; [[Target]] &raquo;).
-        1. Perfom ! KeepDuringJob(_target_).
+        1. Perfom ! AddToKeptObjects(_target_).
         1. Set _weakRef_.[[Target]] to _target_.
         1. Return _weakRef_.
     </emu-clause>
@@ -111,7 +111,7 @@
         throw a *TypeError* exception.
         1. Let _target_ be the value of _weakRef_.[[Target]].
         1. If _target_ is not ~empty~,
-          1. Perform ! KeepDuringJob(_target_).
+          1. Perform ! AddToKeptObjects(_target_).
           1. Return _target_.
         1. Return *undefined*.
       </emu-alg>
@@ -119,7 +119,7 @@
       <emu-note>
         If the WeakRef returns a _target_ Object that is not
         *undefined*, then this _target_ object should not be garbage
-        collected in that turn. The KeepDuringJob operation makes sure
+        collected in that turn. The AddToKeptObjects operation makes sure
         read consistency is maintained.
 
         <pre>
