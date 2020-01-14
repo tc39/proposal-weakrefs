@@ -200,6 +200,11 @@
           such as rematerialization that observably empty the WeakRef are
           prohibited.
         </p>
+
+        <p>
+          Because calling HostCleanupFinalizationGroup is optional, registered objects
+          in a FinalizationGroup do not necessarily hold that FinalizationGroup live.
+        </p>
       </emu-note>
     </emu-clause>
 
