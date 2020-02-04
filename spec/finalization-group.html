@@ -224,23 +224,25 @@
       </ul>
 
       <emu-clause id="sec-%finalizationgroupcleanupiterator%.next">
-          <h1>%FinalizationGroupCleanupIteratorPrototype%.next ( )</h1>
-          <emu-alg>
-            1. Let _iterator_ be the *this* value.
-            1. If Type(_iterator_) is not Object, throw a *TypeError* exception.
-            1. If _iterator_ does not have a [[FinalizationGroup]] internal slot,
-            throw a *TypeError* exception.
-            1. If _iterator_.[[FinalizationGroup]] is ~empty~,
-            throw a *TypeError* exception.
-            1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
-            1. Assert: Type(_finalizationGroup_) is Object.
-            1. Assert: _finalizationGroup_ has a [[Cells]] internal slot.
-            1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[WeakRefTarget]] is ~empty~,
-              1. Choose any such _cell_.
-              1. Remove _cell_ from _finalizationGroup_.[[Cells]].
-              1. Return CreateIterResultObject(_cell_.[[HeldValue]], *false*).
-            1. Otherwise, return CreateIterResultObject(*undefined*, *true*).
-          </emu-alg>
+        <h1>%FinalizationGroupCleanupIteratorPrototype%.next ( )</h1>
+        <emu-alg>
+          1. Let _iterator_ be the *this* value.
+          1. If Type(_iterator_) is not Object, throw a *TypeError* exception.
+          1. If _iterator_ does not have a [[FinalizationGroup]] internal slot,
+          throw a *TypeError* exception.
+          1. If _iterator_.[[FinalizationGroup]] is ~empty~,
+          throw a *TypeError* exception.
+          1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
+          1. Assert: Type(_finalizationGroup_) is Object.
+          1. Assert: _finalizationGroup_ has a [[Cells]] internal slot.
+          1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[WeakRefTarget]] is ~empty~,
+             then an implementation may perform the following steps,
+            1. Choose any such _cell_.
+            1. Remove _cell_ from _finalizationGroup_.[[Cells]].
+            1. Return CreateIterResultObject(_cell_.[[HeldValue]], *false*).
+          1. If the preceding steps were not performed,
+            1. Return CreateIterResultObject(*undefined*, *true*).
+        </emu-alg>
      </emu-clause>
 
       <emu-clause id="sec-%finalizationgroupcleanupiteratorprototype%-@@tostringtag">

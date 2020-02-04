@@ -177,19 +177,30 @@
       </emu-alg>
 
       <emu-note>
-        Together with the definition of liveness, this clause prescribes legal
-        optimizations that an implementation may apply regarding WeakRefs.
+        <p>
+          Together with the definition of liveness, this clause prescribes legal
+          optimizations that an implementation may apply regarding WeakRefs.
+        </p>
 
-        It is possible to access an object without observing its
-        identity. Optimizations such as dead variable elimination, and scalar
-        replacement on properties of non-escaping objects whose identity is not
-        observed, are allowed. These optimizations are thus allowed to
-        observably empty WeakRefs that point to such objects.
+        <p>
+          It is possible to access an object without observing its
+          identity. Optimizations such as dead variable elimination, and scalar
+          replacement on properties of non-escaping objects whose identity is not
+          observed, are allowed. These optimizations are thus allowed to
+          observably empty WeakRefs that point to such objects.
+        </p>
 
-        On the other hand, if an object's identity is observable, and that
-        object is in the [[WeakRefTarget]] internal slot of a WeakRef, optimizations
-        such as rematerialization that observably empty the WeakRef are
-        prohibited.
+        <p>
+          On the other hand, if an object's identity is observable, and that
+          object is in the [[WeakRefTarget]] internal slot of a WeakRef, optimizations
+          such as rematerialization that observably empty the WeakRef are
+          prohibited.
+        </p>
+
+        <p>
+          Because calling HostCleanupFinalizationGroup is optional, registered objects
+          in a FinalizationGroup do not necessarily hold that FinalizationGroup live.
+        </p>
       </emu-note>
     </emu-clause>
 
