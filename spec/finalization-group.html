@@ -103,7 +103,7 @@
     </emu-clause>
 
     <emu-clause id="sec-finalization-group.prototype.register">
-      <h1>FinalizationGroup.prototype.register ( _target_ , _holdings_ [, _unregisterToken_ ]  )</h1>
+      <h1>FinalizationGroup.prototype.register ( _target_ , _heldValue_ [, _unregisterToken_ ]  )</h1>
       <p>The following steps are taken:</p>
       <emu-alg>
         1. Let _finalizationGroup_ be the *this* value.
@@ -111,15 +111,24 @@
         1. If _finalizationGroup_ does not have a [[Cells]] internal slot,
         throw a *TypeError* exception.
         1. If Type(_target_) is not Object, throw a *TypeError* exception.
-        1. If SameValue(_target_, _holdings_), throw a *TypeError* exception.
+        1. If SameValue(_target_, _heldValue_), throw a *TypeError* exception.
         1. If Type(_unregisterToken_) is not Object,
           1. If _unregisterToken_ is not *undefined*, throw a *TypeError* exception.
           1. Set _unregisterToken_ to ~empty~.
-        1. Let _cell_ be the Record { [[Target]] : _target_, [[Holdings]]:
-        _holdings_, [[UnregisterToken]]: _unregisterToken_ }.
+
+        1. Let _cell_ be the Record { [[WeakRefTarget]] : _target_, [[HeldValue]]: _heldValue_,
+        [[UnregisterToken]]: _unregisterToken_ }.
         1. Append _cell_ to _finalizationGroup_.[[Cells]].
         1. Return *undefined*.
       </emu-alg>
+
+      <emu-note>
+        Based on the algorithms and definitions in this specification, across the time when
+        _cell_ is in _finalizationGroup_.[[Cells]], then _cell_.[[Holdings]] is live;
+        however, _cell_.[[UnregisterToken]] and _cell_.[[Target]] are not necessarily live.
+        For example, registering an object with itself as its unregister token would not
+        keep the object alive forever.
+      </emu-note>
     </emu-clause>
 
     <emu-clause id="sec-finalization-group.prototype.unregister">
@@ -133,7 +142,7 @@
         internal slot, throw a *TypeError* exception.
         1. If Type(_unregisterToken_) is not Object, throw a *TypeError* exception.
         1. Let _removed_ be *false*.
-        1. For each Record { [[Target]], [[Holdings]],
+        1. For each Record { [[WeakRefTarget]], [[HeldValue]],
         [[UnregisterToken]] } _cell_ that is an element of
         _finalizationGroup_.[[Cells]], do
           1. If SameValue(_cell_.[[UnregisterToken]], _unregisterToken_) is *true*, then
@@ -226,11 +235,11 @@
           1. Let _finalizationGroup_ be _iterator_.[[FinalizationGroup]].
           1. Assert: Type(_finalizationGroup_) is Object.
           1. Assert: _finalizationGroup_ has a [[Cells]] internal slot.
-          1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[Target]] is ~empty~,
+          1. If _finalizationGroup_.[[Cells]] contains a Record _cell_ such that _cell_.[[WeakRefTarget]] is ~empty~,
              then an implementation may perform the following steps,
             1. Choose any such _cell_.
             1. Remove _cell_ from _finalizationGroup_.[[Cells]].
-            1. Return CreateIterResultObject(_cell_.[[Holdings]], *false*).
+            1. Return CreateIterResultObject(_cell_.[[HeldValue]], *false*).
           1. If the preceding steps were not performed,
             1. Return CreateIterResultObject(*undefined*, *true*).
         </emu-alg>

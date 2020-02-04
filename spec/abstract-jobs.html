@@ -95,7 +95,7 @@
         Some ECMAScript implementations include garbage collector implementations
         which run in the background, including when ECMAScript is idle. Letting the
         embedding environment schedule CleanupFinalizationGroup allows it to resume
-        ECMAScript execution in order to run finalizer work, which may free up holdings,
+        ECMAScript execution in order to run finalizer work, which may free up held values,
         reducing overall memory usage.
       </p>
     </emu-clause>
@@ -145,7 +145,7 @@
         observed.
 
         This is the case for keys in a WeakMap, members of a WeakSet, as well
-        as the [[Target]] and [[UnregisterToken]] fields of a FinalizationGroup
+        as the [[WeakRefTarget]] and [[UnregisterToken]] fields of a FinalizationGroup
         Cell record.
 
         The above definition implies that, if a key in a WeakMap is not live,
@@ -157,10 +157,6 @@
         undecidable and engines use conservative approximations. There is
         expected to be significant implementation leeway.
       </emu-note>
-      <emu-note type=editor>
-        The exact definition of liveness remains under discussion in
-        <a href="https://github.com/tc39/proposal-weakrefs/issues/115">#115</a>.
-      </p>
     </emu-clause>
 
     <emu-clause id="sec-weakref-execution">
@@ -169,10 +165,10 @@
       <p>At any time, if an object _obj_ is not live, an ECMAScript implementation may perform the following steps atomically:</p>
 
       <emu-alg>
-        1. For each WeakRef _ref_ such that _ref_.[[Target]] is _obj_,
-          1. Set _ref_.[[Target]] to ~empty~.
-        1. For each FinalizationGroup _fg_ such that _fg_.[[Cells]] contains _cell_, such that _cell_.[[Target]] is _obj_,
-          1. Set _cell_.[[Target]] to ~empty~.
+        1. For each WeakRef _ref_ such that _ref_.[[WeakRefTarget]] is _obj_,
+          1. Set _ref_.[[WeakRefTarget]] to ~empty~.
+        1. For each FinalizationGroup _fg_ such that _fg_.[[Cells]] contains _cell_, such that _cell_.[[WeakRefTarget]] is _obj_,
+          1. Set _cell_.[[WeakRefTarget]] to ~empty~.
           1. Optionally, perform ! HostCleanupFinalizationGroup(_fg_).
         1. For each WeakMap _map_ such that _map_.[[WeakMapData]] contains a record _r_ such that _r_.[[Key]] is _obj_,
           1. Remove _r_ from _map_.[[WeakMapData]].
@@ -196,7 +192,7 @@
 
         <p>
           On the other hand, if an object's identity is observable, and that
-          object is in the [[Target]] internal slot of a WeakRef, optimizations
+          object is in the [[WeakRefTarget]] internal slot of a WeakRef, optimizations
           such as rematerialization that observably empty the WeakRef are
           prohibited.
         </p>
@@ -238,20 +234,17 @@
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-keepduringjob" aoid="KeepDuringJob">
-    <h1>KeepDuringJob ( _object_ )</h1>
+  <emu-clause id="sec-addtokeptobjects" aoid="AddToKeptObjects">
+    <h1>AddToKeptObjects ( _object_ )</h1>
     <emu-alg>
       1. Let _agent_ be the surrounding agent.
       1. Append _object_ to _agent_.[[KeptAlive]].
     </emu-alg>
     <emu-note>
-      When the abstract operation
-      KeepDuringJob is called with a target object reference, it adds the
-      target to an identity Set that will point strongly at the target until
-      the end of the current Job. This may be abstractly implemented as a
-      Set in the current Job that becomes unreachable when the Job ends
-      because the Job becomes unreachable, or as a Set in the current Agent
-      that gets cleared at the end of each Job.
+      When the abstract operation AddToKeptObjects is called with a
+      target object reference, it adds the target to an identity Set
+      that will point strongly at the target until ClearKeptObjects is
+      called.
     </emu-note>
   </emu-clause>
 
@@ -261,7 +254,7 @@
     <emu-alg>
       1. Assert: _finalizationGroup_ has an [[Cells]] internal slot.
       1. For each _cell_ in _finalizationGroup_.[[Cells]], do
-        1. If _cell_.[[Target]] is ~empty~, then
+        1. If _cell_.[[WeakRefTarget]] is ~empty~, then
           1. Return *true*.
       1. Return *false*.
     </emu-alg>

@@ -53,17 +53,16 @@ It performs the following steps:
 1. If Type(target) is not Object, throw a TypeError exception
 1. If SameValue(target, holdings), throw a TypeError exception
 1. If SameRealm(target, **this**), then
-    1. Let _weakRef_ be ObjectCreate(%WeakRefPrototype%, ([[Factory]], [[Target]], [[Holdings]])).
+    1. Let _weakRef_ be ObjectCreate(%WeakRefPrototype%, ([[Factory]], [[WeakRefTarget]], [[Holdings]])).
     1. Set _weakRef_.[[Factory]] to _O_.
-    1. Set _weakRef_.[[Target]] to _target_.
+    1. Set _weakRef_.[[WeakRefTarget]] to _target_.
     1. Set _weakRef_.[[Holdings]] to _holdings_.
     1. Set all weakRef's garbage collection internal operations.
     1. Perform ! KeepDuringJob(_target_).
 1. Else
-    1. Let _weakRef_ be ObjectCreate(%WeakRefPrototype%, ([[Factory]], [[Target]], [[Holdings]], 
-            [[Strong]])).
+    1. Let _weakRef_ be ObjectCreate(%WeakRefPrototype%, ([[Factory]], [[WeakRefTarget]], [[Holdings]], [[Strong]])).
     1. Set _weakRef_.[[Factory]] to _O_.
-    1. Set _weakRef_.[[Target]] to _target_.
+    1. Set _weakRef_.[[WeakRefTarget]] to _target_.
     1. Set _weakRef_.[[Holdings]] to _holdings_.
     1. Set _weakRef_.[[Strong]] to _target_.
 1. Add _weakref_ to _O_.[[ActiveCells]].
@@ -131,7 +130,7 @@ WeakCell.prototype.clear() performs the following steps:
 1. Let _factory be _O_.[[Factory]].
 1. If _factory_ is not **undefined**.
     1. Remove _O_ from _factory_.[[ActiveCells]].
-    1. Set _O_.[[Target]] to undefined.
+    1. Set _O_.[[WeakRefTarget]] to undefined.
     1. Set _O_.[[Factory]] to undefined.
     1. Set _O_.[[Holdings]] to undefined.
 1. Return **undefined**.
@@ -162,7 +161,7 @@ initially created with the internal slots listed in Table L.
 
 | Internal Slot | Description |
 | ----- | ----- |
-| [[Target]] | The reference to the target object |
+| [[WeakRefTarget]] | The reference to the target object |
 | [[Factory]] | AThe factory that created the object |
 | [[Holdings]] | Any value, passed as a parameter to the cleanup function in the factory |
 
@@ -187,7 +186,7 @@ WeakRef.prototype.deref() performs the following steps:
 1. Let _O_ be the this value.
 2. If Type(_O_) is not Object, throw a TypeError exception.
 3. If _O_ does not have all of the internal slots of a WeakRef Instance, throw a TypeError exception.
-6. Let _a_ be the value of the [[Target]] internal slot of _O_.
+6. Let _a_ be the value of the [[WeakRefTarget]] internal slot of _O_.
 4. If _a_ is not **undefined**, perform ! KeepDuringJob(_a_).
 7. Return _a_.
 
@@ -235,7 +234,7 @@ Job.
 ### WeakTargetReclaimed
 
 The garbage collector calls this abstract operation when it has made a target
-object unreachable and set all weakRef [[Target]] fields that point to it to
+object unreachable and set all weakRef [[WeakRefTarget]] fields that point to it to
 **undefined**.
 
 When the abstract operation `WeakTargetReclaimed` is called with a

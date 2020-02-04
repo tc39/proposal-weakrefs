@@ -45,9 +45,9 @@
         1. If NewTarget is *undefined*, throw a *TypeError* exception.
         1. If Type(_target_) is not Object, throw a *TypeError* exception.
         1. Let _weakRef_ be ? OrdinaryCreateFromConstructor(NewTarget,
-        `"%WeakRefPrototype%"`, &laquo; [[Target]] &raquo;).
-        1. Perfom ! KeepDuringJob(_target_).
-        1. Set _weakRef_.[[Target]] to _target_.
+        `"%WeakRefPrototype%"`, &laquo; [[WeakRefTarget]] &raquo;).
+        1. Perfom ! AddToKeptObjects(_target_).
+        1. Set _weakRef_.[[WeakRefTarget]] to _target_.
         1. Return _weakRef_.
     </emu-clause>
   </emu-clause>
@@ -86,7 +86,7 @@
         object %ObjectPrototype%.
       </li>
       <li>is an ordinary object.</li>
-      <li>does not have a [[Target]] internal slot.</li>
+      <li>does not have a [[WeakRefTarget]] internal slot.</li>
     </ul>
 
     <emu-clause id="sec-weak-ref.prototype.constructor" normative-optional>
@@ -107,11 +107,10 @@
       <emu-alg>
         1. Let _weakRef_ be the *this* value.
         1. If Type(_weakRef_) is not Object, throw a *TypeError* exception.
-        1. If _weakRef_ does not have a [[Target]] internal slot,
-        throw a *TypeError* exception.
-        1. Let _target_ be the value of _weakRef_.[[Target]].
+        1. If _weakRef_ does not have a [[WeakRefTarget]] internal slot, throw a *TypeError* exception.
+        1. Let _target_ be the value of _weakRef_.[[WeakRefTarget]].
         1. If _target_ is not ~empty~,
-          1. Perform ! KeepDuringJob(_target_).
+          1. Perform ! AddToKeptObjects(_target_).
           1. Return _target_.
         1. Return *undefined*.
       </emu-alg>
@@ -119,7 +118,7 @@
       <emu-note>
         If the WeakRef returns a _target_ Object that is not
         *undefined*, then this _target_ object should not be garbage
-        collected in that turn. The KeepDuringJob operation makes sure
+        collected in that turn. The AddToKeptObjects operation makes sure
         read consistency is maintained.
 
         <pre>
@@ -149,7 +148,7 @@
     <h1>Properties of WeakRef Instances</h1>
     <p>
       WeakRef instances are ordinary objects that inherit properties from
-      the WeakRef prototype. WeakRef instances also have a [[Target]]
+      the WeakRef prototype. WeakRef instances also have a [[WeakRefTarget]]
       internal slot.
     </p>
   </emu-clause>
@@ -163,13 +162,6 @@
       to them. This proposal rephrases the definition of WeakMaps and WeakSets
       to explain their observable effects on garbage collection, rather than
       specifying operationally that non-live keys or members are deleted.
-    </p>
-
-    <p>
-      Open questions remain under discussion about the relationship between when
-      elements are collected in WeakMaps, WeakSets and WeakRefs, e.g.,
-      what guarantees are made about timing, c.f.
-      <a href="https://github.com/tc39/proposal-weakrefs/pull/121#issuecomment-497142235">#121 (comment)</a>.
     </p>
   </emu-note>
 
