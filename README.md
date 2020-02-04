@@ -363,6 +363,7 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 * Mark Miller
 * Till Schneidereit
 * Sathya Gunasekaran
+* Daniel Ehrenberg
 
 ## Status
 
