@@ -106,8 +106,7 @@
       <p>The following steps are taken:</p>
       <emu-alg>
         1. Let _weakRef_ be the *this* value.
-        1. If Type(_weakRef_) is not Object, throw a *TypeError* exception.
-        1. If _weakRef_ does not have a [[WeakRefTarget]] internal slot, throw a *TypeError* exception.
+        1. Perform ? RequireInternalSlot(_weakRef_, [[WeakRefTarget]]).
         1. Let _target_ be the value of _weakRef_.[[WeakRefTarget]].
         1. If _target_ is not ~empty~,
           1. Perform ! AddToKeptObjects(_target_).
