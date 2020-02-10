@@ -268,7 +268,7 @@
       [[CleanupCallback]], and [[IsFinalizationGroupCleanupJobActive]] internal slots.
       1. If CheckForEmptyCells(_finalizationGroup_) is *false*, return.
       1. Let _iterator_ be ! CreateFinalizationGroupCleanupIterator(_finalizationGroup_).
-      1. If _callback_ is *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
+      1. If _callback_ is not present or *undefined*, set _callback_ to _finalizationGroup_.[[CleanupCallback]].
       1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *true*.
       1. Let _result_ be Call(_callback_, *undefined*, &laquo; _iterator_ &raquo;).
       1. Set _finalizationGroup_.[[IsFinalizationGroupCleanupJobActive]] to *false*.
