@@ -104,31 +104,40 @@
       <h1>Liveness</h1>
 
       <p>
-        For some object _obj_, a <dfn>hypothetical WeakRef-oblivious</dfn>
-        execution with respect to _obj_ is an execution whereby
-        WeakRef.prototype.deref being called on a WeakRef whose referent is
-        _obj_ always returns *undefined*.
+        For some set of objects _S_, a <dfn>hypothetical WeakRef-oblivious</dfn>
+        execution with respect to _S_ is an execution whereby
+        WeakRef.prototype.deref being called on a WeakRef whose referent is an
+        element of _S_ always returns *undefined*.
       </p>
       <emu-note>
-        WeakRef-obliviousness, together with liveness, capture two
-        notions. One, that a WeakRef itself does not keep an object alive. Two,
-        that cycles in liveness does not imply that an object is live. To be
-        concrete, if determining _obj_'s liveness depends on determining the
-        liveness of another WeakRef referent, _obj2_, _obj2_'s liveness cannot
-        assume _obj_'s liveness, which would beg the question.
+        WeakRef-obliviousness, together with liveness, capture two notions. One,
+        that a WeakRef itself does not keep an object alive. Two, that cycles in
+        liveness does not imply that an object is live. To be concrete, if
+        determining _obj_'s liveness depends on determining the liveness of
+        another WeakRef referent, _obj2_, _obj2_'s liveness cannot assume
+        _obj_'s liveness, which would beg the question.
+      </emu-note>
+      <emu-note>
+        WeakRef-obliviousness is defined on sets of objects instead of
+        individual objects to account for cycles. If it were defined on
+        individual objects, then an object in a cycle will be considered live
+        even though its Object value is only observed via WeakRefs of other
+        objects in the cycle.
       </emu-note>
 
       <p>
-        At any point during evaluation, an object _obj_ is
+        At any point during evaluation, a set of objects _S_ is
         considered <dfn>live</dfn> if either of the following conditions is
         met:
       </p>
 
       <ul>
-        <li>_obj_ is included in any agent's [[KeptAlive]] List.</li>
+        <li>
+          Any element in of _S_ is included in any agent's [[KeptAlive]] List.
+        </li>
         <li>
           There exists a valid future hypothetical WeakRef-oblivious execution
-          with respect to _obj_ that observes the Object value of _obj_.
+          with respect to _S_ that observes the Object value of any object in _S_.
         </li>
       </ul>
       <emu-note>
@@ -162,18 +171,19 @@
     <emu-clause id="sec-weakref-execution">
       <h1>Execution</h1>
 
-      <p>At any time, if an object _obj_ is not live, an ECMAScript implementation may perform the following steps atomically:</p>
+      <p>At any time, if a set of objects _S_ is not live, an ECMAScript implementation may perform the following steps atomically:</p>
 
       <emu-alg>
-        1. For each WeakRef _ref_ such that _ref_.[[WeakRefTarget]] is _obj_,
-          1. Set _ref_.[[WeakRefTarget]] to ~empty~.
-        1. For each FinalizationGroup _fg_ such that _fg_.[[Cells]] contains _cell_, such that _cell_.[[WeakRefTarget]] is _obj_,
-          1. Set _cell_.[[WeakRefTarget]] to ~empty~.
-          1. Optionally, perform ! HostCleanupFinalizationGroup(_fg_).
-        1. For each WeakMap _map_ such that _map_.[[WeakMapData]] contains a record _r_ such that _r_.[[Key]] is _obj_,
-          1. Remove _r_ from _map_.[[WeakMapData]].
-        1. For each WeakSet _set_ such that _set_.[[WeakSetData]] contains _obj_,
-          1. Remove _obj_ from _set_.[[WeakSetData]].
+        1. For each _obj_ of _S_, do
+          1. For each WeakRef _ref_ such that _ref_.[[WeakRefTarget]] is _obj_, do
+            1. Set _ref_.[[WeakRefTarget]] to ~empty~.
+          1. For each FinalizationGroup _fg_ such that _fg_.[[Cells]] contains _cell_, such that _cell_.[[WeakRefTarget]] is _obj_,
+            1. Set _cell_.[[WeakRefTarget]] to ~empty~.
+            1. Optionally, perform ! HostCleanupFinalizationGroup(_fg_).
+          1. For each WeakMap _map_ such that _map_.[[WeakMapData]] contains a record _r_ such that _r_.[[Key]] is _obj_,
+            1. Remove _r_ from _map_.[[WeakMapData]].
+          1. For each WeakSet _set_ such that _set_.[[WeakSetData]] contains _obj_,
+            1. Remove _obj_ from _set_.[[WeakSetData]].
       </emu-alg>
 
       <emu-note>
@@ -200,6 +210,19 @@
         <p>
           Because calling HostCleanupFinalizationGroup is optional, registered objects
           in a FinalizationGroup do not necessarily hold that FinalizationGroup live.
+        </p>
+      </emu-note>
+      <emu-note>
+        <p>
+          Implementations are not obligated to empty WeakRefs for maximal sets
+          of non-live objects.
+        </p>
+        <p>
+          Implementations are obligated to empty WeakRefs for all objects in a
+          non-live set simultaneously. In other words, they must not empty a
+          WeakRef pointing to an object _obj_ without emptying out other
+          WeakRefs that, if not emptied, could result in an execution that
+          observes the Object value of _obj_.
         </p>
       </emu-note>
     </emu-clause>
