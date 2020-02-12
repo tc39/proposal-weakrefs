@@ -200,6 +200,9 @@
         <p>
           Because calling HostCleanupFinalizationGroup is optional, registered objects
           in a FinalizationGroup do not necessarily hold that FinalizationGroup live.
+          Implementations may omit FinalizationGroup callbacks for any reason,
+          e.g., if the FinalizationGroup itself becomes dead, or if the application
+          is shutting down.
         </p>
       </emu-note>
     </emu-clause>
