@@ -74,6 +74,10 @@ _Finalization_ is the execution of code to clean up after an object that has bec
 
 Finalizers are tricky business and it is best to avoid them.  They can be invoked at unexpected times, or not at all---for example, they are not invoked when closing a browser tab or on process exit.  They don’t help the garbage collector do its job; rather, they are a hindrance.  Furthermore, they perturb the garbage collector’s internal accounting.  The GC decides to scan the heap when it thinks that it is necessary, after some amount of allocation.  Finalizable objects almost always represent an amount of allocation that is invisible to the garbage collector.  The effect can be that the actual resource usage of a system with finalizable objects is higher than what the GC thinks it should be.
 
+The proposed specification allows conforming implementations to skip calling finalization callbacks for any reason or no reason. Some reasons why many JS environments and implementations may omit finalization callbacks:
+- If the program shuts down (e.g., process exit, closing a tab, navigating away from a page), finalization callbacks typically don't run on the way out. (Discussion: [#125](https://github.com/tc39/proposal-weakrefs/issues/125))
+- If the FinalizationGroup becomes "dead" (basically, unreachable), then finalization callbacks registered against it might not run. (Discussion: [#66](https://github.com/tc39/proposal-weakrefs/issues/66))
+
 All that said, sometimes finalizers are the right answer to a problem.  The following examples show a few important problems that would be difficult to solve without finalizers.
 
 ### Locating and responding to external resource leaks
