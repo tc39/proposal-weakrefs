@@ -88,10 +88,8 @@ The `FinalizationRegistry` class represents a group of objects registered with a
 
 ```js
 class FileStream {
-  static #cleanUp(heldValues) {
-    for (const file of heldValues) {
-      console.error(`File leaked: ${file}!`);
-    }
+  static #cleanUp(heldValue) {
+    console.error(`File leaked: ${file}!`);
   }
 
   static #finalizationGroup = new FinalizationRegistry(this.#cleanUp);
@@ -130,9 +128,9 @@ This example shows usage of the whole `FinalizationRegistry` API:
   - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
   - A held value, which is used to represent that object when cleaning it up in the finalizer. Here, the held value is the underlying `File` object. (Note: the held value should not have a reference to the weak target, as that would prevent the target from being collected.)
   - An unregistration token, which is passed to the `unregister` method when the finalizer is no longer needed. Here we use `this`, the `FileStream` object itself, since `FinalizationRegistry` doesn't hold a strong reference to the unregister token.
-- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with an iterator of the held values.
+- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with a held value.
 
-The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate held value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
+The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, the `FinalizerRegistry` callback is called with a separate held value, rather than the original object--the object's already gone, so it can't be used.
 
 In the above code sample, the `fs` object will be unregistered as part of the `close` method, which will mean that the finalizer will not be called, and there will be no error log statement. Unregistration can be useful to avoid other sorts of "double free" scenarios.
 
@@ -147,7 +145,7 @@ function makeAllocator(size, length) {
   const freeList = Array.from({length}, (v, i) => size * i);
   const memory = new ArrayBuffer(size * length);
   const finalizationGroup = new FinalizationRegistry(
-    iterator => freeList.unshift(...iterator));
+    held => freeList.unshift(held));
   return { memory, size, freeList, finalizationGroup };
 }
 
@@ -165,9 +163,9 @@ This code uses a few features of the `FinalizationRegistry` API:
 - An object can have a finalizer referenced by calling the `register` method of `FinalizationRegistry`. In this case, two arguments are passed to the `register` method:
   - The object whose lifetime we're concerned with. Here, that's the `Uint8Array`
   - A held value, which is used to represent that object when cleaning it up in the finalizer. In this case, the held value is an integer corresponding to the offset within the `WebAssembly.Memory` object.
-- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with an iterator of the held values.
+- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with a held value.
 
-The `FinalizationRegistry` callback is passed an iterator of held values to give that callback control over how much work it wants to process. The callback may pull in only part of the iterator, and in this case, the rest of the work would be "saved for later". The callback is not called during execution of other JavaScript code, but rather "in between turns"; it is currently proposed to be restricted to run after all of the `Promise`-related work is done, right before turning control over to the event loop.
+The `FinalizationRegistry` callback is called potentially multiple times, for each registered object that becomes dead, with a relevant held value. The callback is not called during execution of other JavaScript code, but rather "in between turns"--it is not interspersed with Promise work, for example, but only runs after all of the Promises have been processed.
 
 ### Avoid memory leaks for cross-worker proxies
 
@@ -189,12 +187,10 @@ In the initial example from this README, `makeWeakCached` used a `Map` whose val
 // Fixed version that doesn't leak memory.
 function makeWeakCached(f) {
   const cache = new Map();
-  const cleanup = new FinalizationRegistry(iterator => {
-    for (const key of iterator) {
-      // See note below on concurrency considerations.
-      const ref = cache.get(key);
-      if (ref && !ref.deref()) cache.delete(key);
-    }
+  const cleanup = new FinalizationRegistry(key => {
+    // See note below on concurrency considerations.
+    const ref = cache.get(key);
+    if (ref && !ref.deref()) cache.delete(key);
   });
 
   return key => {
@@ -232,10 +228,8 @@ class IterableWeakMap {
   #refSet = new Set();
   #finalizationGroup = new FinalizationRegistry(IterableWeakMap.#cleanup);
 
-  static #cleanup(iterator) {
-    for (const { set, ref } of iterator) {
-      set.delete(ref);
-    }
+  static #cleanup({ set, ref }) {
+    set.delete(ref);
   }
 
   constructor(iterable) {
