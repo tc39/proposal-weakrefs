@@ -175,7 +175,7 @@ In a system with proxies and processes, remote proxies need to keep local object
 
 Note: This kind of setup cannot collect cycles across workers. If in each worker the local object holds a reference to a proxy for the remote object, then the remote descriptor for the local object prevents the collection of the proxy for the remote object. None of the objects can be collected automatically when code outside the proxy library no longer references them. To avoid leaking, cycles across isolated heaps must be explicitly broken.
 
-## Using `WeakRef`s and `FinalizationRegistry`s together
+## Using `WeakRef` objects and `FinalizationRegistry` objects together
 
 It sometimes makes sense to use `WeakRef` and `FinalizationRegistry` together. There are several kinds of data structures that want to weakly point to a value, and do some kind of cleanup when that value goes away.  Note however that weak refs are cleared when their object is collected, but their associated `FinalizationRegistry` cleanup handler only runs in a later task; programming idioms that use weak refs and finalizers on the same object need to mind the gap.
 
