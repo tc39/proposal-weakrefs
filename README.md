@@ -218,7 +218,7 @@ This example illustrates two important considerations about finalizers:
 
 ### Iterable WeakMaps
 
-In certain advanced cases, `WeakRef`s and `FinalizationRegistry`s can be very effective complements. For example, WeakMaps have the limitation that they cannot be iterated over or cleared. The WeakRefs proposal enables creating an “iterable + clearable WeakMap”:
+In certain advanced cases, `WeakRef` objects and `FinalizationRegistry` objects can be very effective complements. For example, WeakMaps have the limitation that they cannot be iterated over or cleared. The WeakRefs proposal enables creating an “iterable + clearable WeakMap”:
 
 Such “iterable WeakMaps” are already used in existing DOM APIs such as `document.getElementsByClassName` or `document.getElementsByTagName`, which return live `HTMLCollection`s. As such, the `WeakRef` proposal [adds missing functionality that helps explain existing web platform features](https://extensiblewebmanifesto.org/). [Issue #17 describes a similar use case.](https://github.com/tc39/proposal-weakrefs/issues/17)
 
