@@ -23,7 +23,7 @@ This proposal contains two advanced features, `WeakRef`s and `FinalizationRegist
 
 Important logic should not be placed in the code path of a finalizer. Doing so could create user-facing issues triggered by memory management bugs, or even differences between JavaScript garbage collector implementations. For example, if data is saved persistently solely from a finalizer, then a bug which accidentally keeps an additional reference around could lead to data loss.
 
-For this reason, the [W3C TAG Design Principles](https://w3ctag.github.io/design-principles/#js-gc) recommend against creating APIs that expose garbage collection. It's best if `WeakRef`s and `FinalizationRegistry`s are used as a way to avoid excess memory usage, or as a backstop against certain bugs, rather than as a normal way to clean up external resources or observe what's allocated.
+For this reason, the [W3C TAG Design Principles](https://w3ctag.github.io/design-principles/#js-gc) recommend against creating APIs that expose garbage collection. It's best if `WeakRef` objects and `FinalizationRegistry` objects are used as a way to avoid excess memory usage, or as a backstop against certain bugs, rather than as a normal way to clean up external resources or observe what's allocated.
 
 ## Weak references
 
