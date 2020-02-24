@@ -11,7 +11,7 @@ These interfaces can be used independently or together, depending on the use cas
 
 ## A note of caution
 
-This proposal contains two advanced features, `WeakRef`s and `FinalizationRegistry`s. Their correct use takes careful thought, and they are best avoided if possible.
+This proposal contains two advanced features, `WeakRef` and `FinalizationRegistry`. Their correct use takes careful thought, and they are best avoided if possible.
 
 [Garbage collectors](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)) are complicated. If an application or library depends on GC cleaning up a WeakRef or calling a finalizer in a timely, predictable manner, it's likely to be disappointed: the cleanup may happen much later than expected, or not at all. Sources of variability include:
 - One object might be garbage-collected much sooner than another object, even if they become unreachable at the same time, e.g., due to generational collection.
