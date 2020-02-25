@@ -165,7 +165,7 @@ This code uses a few features of the `FinalizationRegistry` API:
   - A held value, which is used to represent that object when cleaning it up in the finalizer. In this case, the held value is an integer corresponding to the offset within the `WebAssembly.Memory` object.
 - The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with a held value.
 
-The `FinalizationRegistry` callback is called potentially multiple times, for each registered object that becomes dead, with a relevant held value. The callback is not called during execution of other JavaScript code, but rather "in between turns"--it is not interspersed with Promise work, for example, but only runs after all of the Promises have been processed.
+The `FinalizationRegistry` callback is called potentially multiple times, once for each registered object that becomes dead, with a relevant held value. The callback is not called during execution of other JavaScript code, but rather "in between turns". The engine is free to batch calls, and a batch of calls only runs after all of the Promises have been processed. How the engine batches callbacks is implementation-dependent, and how those callbacks intersperse with Promise work should not be depended upon.
 
 ### Avoid memory leaks for cross-worker proxies
 
