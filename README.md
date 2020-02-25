@@ -76,7 +76,7 @@ Finalizers are tricky business and it is best to avoid them.  They can be invoke
 
 The proposed specification allows conforming implementations to skip calling finalization callbacks for any reason or no reason. Some reasons why many JS environments and implementations may omit finalization callbacks:
 - If the program shuts down (e.g., process exit, closing a tab, navigating away from a page), finalization callbacks typically don't run on the way out. (Discussion: [#125](https://github.com/tc39/proposal-weakrefs/issues/125))
-- If the FinalizationRegistry becomes "dead" (basically, unreachable), then finalization callbacks registered against it might not run. (Discussion: [#66](https://github.com/tc39/proposal-weakrefs/issues/66))
+- If the FinalizationRegistry becomes "dead" (approximately, unreachable), then finalization callbacks registered against it might not run. (Discussion: [#66](https://github.com/tc39/proposal-weakrefs/issues/66))
 
 All that said, sometimes finalizers are the right answer to a problem.  The following examples show a few important problems that would be difficult to solve without finalizers.
 
