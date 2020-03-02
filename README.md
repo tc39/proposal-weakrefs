@@ -207,7 +207,7 @@ function makeWeakCached(f) {
 
     const fresh = f(key);
     cache.set(key, new WeakRef(fresh));
-    cleanup.register(fresh, key, key);
+    cleanup.register(fresh, key);
     return fresh;
   };
 }
