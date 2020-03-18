@@ -372,5 +372,6 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 ## Status
 
 * WeakRefs are now Stage 3
-* [Available behind the `javascript.options.experimental.weakrefs` flag in Firefox Nightly]
+* [Available behind the `javascript.options.experimental.weakrefs` flag in Firefox Nightly](https://bugzilla.mozilla.org/show_bug.cgi?id=1593698)
 * [Available behind the `--harmony-weak-refs` flag in V8, by Marja Hölttä](https://bugs.chromium.org/p/v8/issues/detail?id=8179)
+* [Available in Moddable XS](https://github.com/Moddable-OpenSource/moddable-xst/releases/tag/v9.0.1)
