@@ -95,7 +95,7 @@ Some notes on WeakRefs:
 
 * If your code has just created a WeakRef for a target object, or has gotten a target object from a WeakRef's `deref` method, that target object will not be reclaimed until the end of the current JavaScript [job](https://tc39.es/ecma262/#job) (including any promise reaction jobs that run at the end of a script job). That is, you can only "see" an object get reclaimed between turns of the event loop. This is primarily to avoid making the behavior of any given JavaScript engine's garbage collector apparent in code&nbsp;&mdash; because if it were, people would write code relying on that behavior, which would break when the garbage collector's behavior changed. (Garbage collection is a hard problem; JavaScript engine implementers are constantly refining and improving how it works.)
 * If multiple WeakRefs have the same target, they're consistent with one another. The result of calling `deref` on one of them will match the result of calling `deref` on another of them (in the same job), you won't get the target object from one of them but `undefined` from another.
-* If the target of a WeakRef is also in a [`FinalizationRegistry`](#finalizationregistry), the WeakRef's target is cleared *before* any cleanup callback associated with the registry is called.
+* If the target of a WeakRef is also in a [`FinalizationRegistry`](#finalizationregistry), the WeakRef's target is cleared at the same time or before any cleanup callback associated with the registry is called; if your cleanup callback calls `deref` on a WeakRef for the object, it will receive `undefined`.
 * You cannot change the target of a WeakRef, it will always only ever be the original target object or `undefined` when that target has been reclaimed.
 * A WeakRef might never return `undefined` from `deref`, even if nothing strongly holds the target, because the garbage collector may never decide to reclaim the object.
 
@@ -103,7 +103,7 @@ Some notes on WeakRefs:
 
 A finalization registry provides a way to request that a *cleanup callback* get called at some point after an object registered with the registry has been *reclaimed* (garbage collected). (Cleanup callbacks are sometimes called *finalizers*.)
 
-**NOTE:** The form of this API is under review, see [issue #187](https://github.com/tc39/proposal-weakrefs/pull/187).
+**NOTE:** The form of this API is under review, see [issue #187](https://github.com/tc39/proposal-weakrefs/pull/187). This document is written in terms of that PR landing.
 
 **NOTE:** Cleanup callbacks should not be used for essential program logic. See [*Notes on Cleanup Callbacks*](#notes-on-cleanup-callbacks) for more.
 
@@ -122,7 +122,7 @@ A finalization registry provides a way to request that a *cleanup callback* get 
 A `FinalizationRegistry` instance (a "registry") lets you get *cleanup callbacks* after objects registered with the registry are reclaimed. You create the registry passing in the callback:
 
 ```js
-const registry = new FInalizationRegistry(heldValue => {
+const registry = new FinalizationRegistry(heldValue => {
     // ....
 });
 ```
@@ -165,10 +165,8 @@ It's likely that major implementations will call cleanup callbacks at some point
 
 There are also situations where even implementations that normally call cleanup callbacks are unlikely to call them:
 
-* When the JavaScript realm the objects existed in is being destroyed entirely (for instance, closing a tab in a browser).
+* When the JavaScript program shuts down entirely (for instance, closing a tab in a browser).
 * When the `FinalizationRegistry` instance itself is no longer reachable by JavaScript code.
-
-See [Use Cases for Cleanup Callbacks](#use-cases-for-cleanup-callbacks) and [Patterns to Avoid With Cleanup Callbacks](#patterns-to-avoid-with-cleanup-callbacks) for more on this topic.
 
 ## FinalizationRegistry API
 
