@@ -9,6 +9,8 @@ The WeakRef proposal encompasses two major new pieces of functionality:
 
 These interfaces can be used independently or together, depending on the use case.
 
+For developer reference documentation, see [`reference.md`](reference.md).
+
 ## A note of caution
 
 This proposal contains two advanced features, `WeakRef` and `FinalizationRegistry`. Their correct use takes careful thought, and they are best avoided if possible.
