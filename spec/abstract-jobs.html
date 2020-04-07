@@ -222,11 +222,11 @@
           of non-live objects.
         </p>
         <p>
-          Implementations are obligated to empty WeakRefs for all objects in a
-          non-live set simultaneously. In other words, they must not empty a
-          WeakRef pointing to an object _obj_ without emptying out other
-          WeakRefs that, if not emptied, could result in an execution that
-          observes the Object value of _obj_.
+          If an implementation chooses a non-live set _S_ in which to empty WeakRefs, it
+          must empty WeakRefs for all objects in _S_ simultaneously. In other
+          words, an implementation must not empty a WeakRef pointing to an object _obj_
+          without emptying out other WeakRefs that, if not emptied, could result
+          in an execution that observes the Object value of _obj_.
         </p>
       </emu-note>
     </emu-clause>
