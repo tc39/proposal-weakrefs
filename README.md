@@ -78,7 +78,7 @@ Finalizers are tricky business and it is best to avoid them.  They can be invoke
 
 The proposed specification allows conforming implementations to skip calling finalization callbacks for any reason or no reason. Some reasons why many JS environments and implementations may omit finalization callbacks:
 - If the program shuts down (e.g., process exit, closing a tab, navigating away from a page), finalization callbacks typically don't run on the way out. (Discussion: [#125](https://github.com/tc39/proposal-weakrefs/issues/125))
-- If the FinalizationRegistry becomes "dead" (basically, unreachable), then finalization callbacks registered against it might not run. (Discussion: [#66](https://github.com/tc39/proposal-weakrefs/issues/66))
+- If the FinalizationRegistry becomes "dead" (approximately, unreachable), then finalization callbacks registered against it might not run. (Discussion: [#66](https://github.com/tc39/proposal-weakrefs/issues/66))
 
 All that said, sometimes finalizers are the right answer to a problem.  The following examples show a few important problems that would be difficult to solve without finalizers.
 
@@ -90,10 +90,8 @@ The `FinalizationRegistry` class represents a group of objects registered with a
 
 ```js
 class FileStream {
-  static #cleanUp(heldValues) {
-    for (const file of heldValues) {
-      console.error(`File leaked: ${file}!`);
-    }
+  static #cleanUp(heldValue) {
+    console.error(`File leaked: ${file}!`);
   }
 
   static #finalizationGroup = new FinalizationRegistry(this.#cleanUp);
@@ -132,9 +130,9 @@ This example shows usage of the whole `FinalizationRegistry` API:
   - The object whose lifetime we're concerned with. Here, that's `this`, the `FileStream` object.
   - A held value, which is used to represent that object when cleaning it up in the finalizer. Here, the held value is the underlying `File` object. (Note: the held value should not have a reference to the weak target, as that would prevent the target from being collected.)
   - An unregistration token, which is passed to the `unregister` method when the finalizer is no longer needed. Here we use `this`, the `FileStream` object itself, since `FinalizationRegistry` doesn't hold a strong reference to the unregister token.
-- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with an iterator of the held values.
+- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with a held value.
 
-The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, a separate held value is put in the iterator, rather than the original object--the object's already gone, so it can't be used.
+The finalizer callback is called *after* the object is garbage collected, a pattern which is sometimes called "post-mortem". For this reason, the `FinalizerRegistry` callback is called with a separate held value, rather than the original object--the object's already gone, so it can't be used.
 
 In the above code sample, the `fs` object will be unregistered as part of the `close` method, which will mean that the finalizer will not be called, and there will be no error log statement. Unregistration can be useful to avoid other sorts of "double free" scenarios.
 
@@ -149,7 +147,7 @@ function makeAllocator(size, length) {
   const freeList = Array.from({length}, (v, i) => size * i);
   const memory = new ArrayBuffer(size * length);
   const finalizationGroup = new FinalizationRegistry(
-    iterator => freeList.unshift(...iterator));
+    held => freeList.unshift(held));
   return { memory, size, freeList, finalizationGroup };
 }
 
@@ -167,9 +165,9 @@ This code uses a few features of the `FinalizationRegistry` API:
 - An object can have a finalizer referenced by calling the `register` method of `FinalizationRegistry`. In this case, two arguments are passed to the `register` method:
   - The object whose lifetime we're concerned with. Here, that's the `Uint8Array`
   - A held value, which is used to represent that object when cleaning it up in the finalizer. In this case, the held value is an integer corresponding to the offset within the `WebAssembly.Memory` object.
-- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with an iterator of the held values.
+- The `FinalizationRegistry` constructor is called with a callback as an argument. This callback is called with a held value.
 
-The `FinalizationRegistry` callback is passed an iterator of held values to give that callback control over how much work it wants to process. The callback may pull in only part of the iterator, and in this case, the rest of the work would be "saved for later". The callback is not called during execution of other JavaScript code, but rather "in between turns"; it is currently proposed to be restricted to run after all of the `Promise`-related work is done, right before turning control over to the event loop.
+The `FinalizationRegistry` callback is called potentially multiple times, once for each registered object that becomes dead, with a relevant held value. The callback is not called during execution of other JavaScript code, but rather "in between turns". The engine is free to batch calls, and a batch of calls only runs after all of the Promises have been processed. How the engine batches callbacks is implementation-dependent, and how those callbacks intersperse with Promise work should not be depended upon.
 
 ### Avoid memory leaks for cross-worker proxies
 
@@ -179,7 +177,7 @@ In a system with proxies and processes, remote proxies need to keep local object
 
 Note: This kind of setup cannot collect cycles across workers. If in each worker the local object holds a reference to a proxy for the remote object, then the remote descriptor for the local object prevents the collection of the proxy for the remote object. None of the objects can be collected automatically when code outside the proxy library no longer references them. To avoid leaking, cycles across isolated heaps must be explicitly broken.
 
-## Using `WeakRef`s and `FinalizationRegistry`s together
+## Using `WeakRef` objects and `FinalizationRegistry` objects together
 
 It sometimes makes sense to use `WeakRef` and `FinalizationRegistry` together. There are several kinds of data structures that want to weakly point to a value, and do some kind of cleanup when that value goes away.  Note however that weak refs are cleared when their object is collected, but their associated `FinalizationRegistry` cleanup handler only runs in a later task; programming idioms that use weak refs and finalizers on the same object need to mind the gap.
 
@@ -191,12 +189,10 @@ In the initial example from this README, `makeWeakCached` used a `Map` whose val
 // Fixed version that doesn't leak memory.
 function makeWeakCached(f) {
   const cache = new Map();
-  const cleanup = new FinalizationRegistry(iterator => {
-    for (const key of iterator) {
-      // See note below on concurrency considerations.
-      const ref = cache.get(key);
-      if (ref && !ref.deref()) cache.delete(key);
-    }
+  const cleanup = new FinalizationRegistry(key => {
+    // See note below on concurrency considerations.
+    const ref = cache.get(key);
+    if (ref && !ref.deref()) cache.delete(key);
   });
 
   return key => {
@@ -234,10 +230,8 @@ class IterableWeakMap {
   #refSet = new Set();
   #finalizationGroup = new FinalizationRegistry(IterableWeakMap.#cleanup);
 
-  static #cleanup(iterator) {
-    for (const { set, ref } of iterator) {
-      set.delete(ref);
-    }
+  static #cleanup({ set, ref }) {
+    set.delete(ref);
   }
 
   constructor(iterable) {
