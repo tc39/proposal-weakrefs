@@ -9,9 +9,11 @@ The WeakRef proposal encompasses two major new pieces of functionality:
 
 These interfaces can be used independently or together, depending on the use case.
 
+For developer reference documentation, see [`reference.md`](reference.md).
+
 ## A note of caution
 
-This proposal contains two advanced features, `WeakRef`s and `FinalizationRegistry`s. Their correct use takes careful thought, and they are best avoided if possible.
+This proposal contains two advanced features, `WeakRef` and `FinalizationRegistry`. Their correct use takes careful thought, and they are best avoided if possible.
 
 [Garbage collectors](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)) are complicated. If an application or library depends on GC cleaning up a WeakRef or calling a finalizer in a timely, predictable manner, it's likely to be disappointed: the cleanup may happen much later than expected, or not at all. Sources of variability include:
 - One object might be garbage-collected much sooner than another object, even if they become unreachable at the same time, e.g., due to generational collection.
@@ -203,7 +205,7 @@ function makeWeakCached(f) {
 
     const fresh = f(key);
     cache.set(key, new WeakRef(fresh));
-    cleanup.register(fresh, key, key);
+    cleanup.register(fresh, key);
     return fresh;
   };
 }
@@ -366,5 +368,6 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 ## Status
 
 * WeakRefs are now Stage 3
-* [Available behind the `javascript.options.experimental.weakrefs` flag in Firefox Nightly]
+* [Available behind the `javascript.options.experimental.weakrefs` flag in Firefox Nightly](https://bugzilla.mozilla.org/show_bug.cgi?id=1593698)
 * [Available behind the `--harmony-weak-refs` flag in V8, by Marja Hölttä](https://bugs.chromium.org/p/v8/issues/detail?id=8179)
+* [Available in Moddable XS](https://github.com/Moddable-OpenSource/moddable-xst/releases/tag/v9.0.1)
