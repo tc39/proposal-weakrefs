@@ -103,8 +103,6 @@ Some notes on WeakRefs:
 
 A finalization registry provides a way to request that a *cleanup callback* get called at some point after an object registered with the registry has been *reclaimed* (garbage collected). (Cleanup callbacks are sometimes called *finalizers*.)
 
-**NOTE:** The form of this API is under review, see [issue #187](https://github.com/tc39/proposal-weakrefs/pull/187). This document is written in terms of that PR landing.
-
 **NOTE:** Cleanup callbacks should not be used for essential program logic. See [*Notes on Cleanup Callbacks*](#notes-on-cleanup-callbacks) for more.
 
 **FinalizationRegistry Contents**:
