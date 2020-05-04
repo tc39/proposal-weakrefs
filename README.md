@@ -94,7 +94,7 @@ class FileStream {
     console.error(`File leaked: ${file}!`);
   }
 
-  static #finalizationGroup = new FinalizationRegistry(this.#cleanUp);
+  static #finalizationGroup = new FinalizationRegistry(FileStream.#cleanUp);
 
   #file;
 
