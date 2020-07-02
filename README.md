@@ -91,7 +91,7 @@ The `FinalizationRegistry` class represents a group of objects registered with a
 ```js
 class FileStream {
   static #cleanUp(heldValue) {
-    console.error(`File leaked: ${file}!`);
+    console.error(`File leaked: ${heldValue}!`);
   }
 
   static #finalizationGroup = new FinalizationRegistry(FileStream.#cleanUp);
@@ -210,7 +210,7 @@ function makeWeakCached(f) {
   };
 }
 
-var getImageCached = makeWeakCached(getImage);
+const getImageCached = makeWeakCached(getImage);
 ```
 
 This example illustrates two important considerations about finalizers:
