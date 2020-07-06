@@ -353,7 +353,6 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 
 - [OLD Explanation](https://github.com/tc39/proposal-weakrefs/blob/master/history/weakrefs.md) of a previous version of the proposal
 - [WeakRefGroups](https://github.com/tc39/proposal-weakrefs/wiki/WeakRefGroups): Previously proposed interface
-- [Support for long wasm jobs](https://github.com/tc39/proposal-weakrefs/wiki/Support-for-long-wasm-jobs): Background on the motivation for the `cleanupSome` method
 - [Previous Spec-text](https://github.com/tc39/proposal-weakrefs/blob/master/history/spec.md) for an earlier draft of the proposal
 - [Slides](https://github.com/tc39/proposal-weakrefs/blob/master/history/Weak%20References%20for%20EcmaScript.pdf): Some design considerations that went into this proposal
 
