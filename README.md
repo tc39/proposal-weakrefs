@@ -2,7 +2,7 @@
 
 ## Status
 
-* WeakRefs are now Stage 4
+* WeakRef and FinalizationRegistry are now Stage 4, since the July 2020 TC39 meeting
 * V8 -- shipping [Chrome 84](https://v8.dev/features/weak-references)
 * Spidermonkey -- shipping [Firefox 79](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/79) (current Beta)
 * JavaScriptCore -- [in progress](https://bugs.webkit.org/show_bug.cgi?id=198710)
