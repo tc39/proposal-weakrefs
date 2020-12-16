@@ -372,3 +372,10 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 * Till Schneidereit
 * Sathya Gunasekaran
 * Daniel Ehrenberg
+
+## Status
+
+* WeakRefs are now Stage 4
+* Chrome 84
+* Firefox 79
+* [Available in Moddable XS](https://github.com/Moddable-OpenSource/moddable-xst/releases/tag/v9.0.1)
