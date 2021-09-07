@@ -5,7 +5,7 @@
 * WeakRef and FinalizationRegistry are now Stage 4, since the July 2020 TC39 meeting
 * V8 -- shipping [Chrome 84](https://v8.dev/features/weak-references)
 * Spidermonkey -- shipping [Firefox 79](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/79)
-* JavaScriptCore -- [in progress](https://bugs.webkit.org/show_bug.cgi?id=198710)
+* JavaScriptCore -- shipping [Safari 14.1](https://webkit.org/blog/11648/new-webkit-features-in-safari-14-1)
 * engine262 -- [Initial patch](https://github.com/engine262/engine262/commit/0516660577b050b17e619af4c3f053c7506c670d), now all landed
 * XS -- [Shipping in Moddable XS 9.0.1](https://github.com/Moddable-OpenSource/moddable-xst/releases/tag/v9.0.1)
 
@@ -378,4 +378,5 @@ The WeakRefs proposal guarantees that multiple calls to `WeakRef.prototype.deref
 * WeakRefs are now Stage 4
 * Chrome 84
 * Firefox 79
+* Safari 14.1
 * [Available in Moddable XS](https://github.com/Moddable-OpenSource/moddable-xst/releases/tag/v9.0.1)
