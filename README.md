@@ -243,26 +243,36 @@ class IterableWeakMap {
     set.delete(ref);
   }
 
-  constructor(iterable) {
-    for (const [key, value] of iterable) {
-      this.set(key, value);
+  constructor(iterable = null) {
+    if (iterable !== null) {
+      for (const { 0: key, 1: value } of iterable) {
+        this.set(key, value);
+      }
     }
   }
 
   set(key, value) {
-    const ref = new WeakRef(key);
+    const entry = this.#weakMap.get(key);
+    if (entry) {
+      entry.value = value;
+    } else {
+      const ref = new WeakRef(key);
 
-    this.#weakMap.set(key, { value, ref });
-    this.#refSet.add(ref);
-    this.#finalizationGroup.register(key, {
-      set: this.#refSet,
-      ref
-    }, ref);
+      this.#weakMap.set(key, { value, ref });
+      this.#refSet.add(ref);
+      this.#finalizationGroup.register(key, {
+        set: this.#refSet,
+        ref
+      }, ref);
+    }
   }
 
   get(key) {
-    const entry = this.#weakMap.get(key);
-    return entry && entry.value;
+    return this.#weakMap.get(key)?.value;
+  }
+
+  has(key) {
+    return this.#weakMap.has(key);
   }
 
   delete(key) {
@@ -291,13 +301,13 @@ class IterableWeakMap {
   }
 
   *keys() {
-    for (const [key, value] of this) {
+    for (const { 0: key } of this) {
       yield key;
     }
   }
 
   *values() {
-    for (const [key, value] of this) {
+    for (const { 1: value } of this) {
       yield value;
     }
   }
