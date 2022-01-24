@@ -4,7 +4,7 @@
 
 * WeakRef and FinalizationRegistry are now Stage 4, since the July 2020 TC39 meeting
 * V8 -- shipping [Chrome 84](https://v8.dev/features/weak-references)
-* Spidermonkey -- shipping [Firefox 79](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/79) (current Beta)
+* Spidermonkey -- shipping [Firefox 79](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/79)
 * JavaScriptCore -- [in progress](https://bugs.webkit.org/show_bug.cgi?id=198710)
 * engine262 -- [Initial patch](https://github.com/engine262/engine262/commit/0516660577b050b17e619af4c3f053c7506c670d), now all landed
 * XS -- [Shipping in Moddable XS 9.0.1](https://github.com/Moddable-OpenSource/moddable-xst/releases/tag/v9.0.1)
